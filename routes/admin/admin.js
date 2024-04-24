@@ -50,7 +50,7 @@ const {
 } = require("../../controller/admin/adminController");
 const { checkSuperUser } = require("../../middlewares/adminAuth");
 const upload = require("../../middlewares/singleFileUpload");
-const { getAllBlogs, createBlog, updateBlog, deleteBlog } = require("../../controller/Blog/blogsContoller");
+const { getAllBlogs, createBlog, updateBlog, deleteBlog } = require("../../controller/PBlogs/PblogsController");
 
 router.post("/register", registerAdmin); // Register new Admin
 router.post("/login", loginAdmin); // Login Admin

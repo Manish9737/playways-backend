@@ -1,11 +1,13 @@
 var express = require("express");
 const {
+  createBlog,
   getAllBlogs,
   getBlogById,
   updateBlog,
   deleteBlog,
-} = require("../../controller/blog/BlogsController");
+} = require("../../controller/PBlogs/PblogsController");
 var router = express.Router();
+const upload = require("../../middlewares/singleFileUpload")
 
 router.post("/add", upload("images").single("image"), createBlog);
 router.get("/get", getAllBlogs);

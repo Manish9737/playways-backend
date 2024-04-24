@@ -5,7 +5,7 @@ const {
   getBlogById,
   updateBlog,
   deleteBlog,
-} = require("../../controller/blogs/blogsController");
+} = require("../../controller/blog/BlogsController");
 var router = express.Router();
 
 router.post("/add", upload("images").single("image"), createBlog);

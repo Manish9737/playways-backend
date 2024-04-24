@@ -6,7 +6,7 @@ const {
   getBlogById,
   updateBlog,
   deleteBlog,
-} = require("../../controller/blog/blogsContoller");
+} = require("../../controller/blog/blogsController");
 const upload = require("../../middlewares/singleFileUpload");
 
 router.post("/add", upload("images").single("image"), createBlog);

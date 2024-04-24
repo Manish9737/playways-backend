@@ -1,6 +1,5 @@
 var express = require("express");
 const {
-  createBlog,
   getAllBlogs,
   getBlogById,
   updateBlog,

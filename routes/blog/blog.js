@@ -1,13 +1,12 @@
 var express = require("express");
-var router = express.Router();
 const {
   createBlog,
   getAllBlogs,
   getBlogById,
   updateBlog,
   deleteBlog,
-} = require("../../controller/blog/blogsContoller");
-const upload = require("../../middlewares/singleFileUpload");
+} = require("../../controller/Blog/blogsContoller");
+var router = express.Router();
 
 router.post("/add", upload("images").single("image"), createBlog);
 router.get("/get", getAllBlogs);

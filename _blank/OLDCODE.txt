@@ -1,0 +1,36 @@
+--- Old login code of host ---
+
+
+  // const { emailOrPhone, password } = req.body;
+
+  // try {
+  //   let host;
+
+  //   // Check if the provided input is an email or a phone number
+  //   const isEmail = /\S+@\S+\.\S+/.test(emailOrPhone);
+  //   if (isEmail) {
+  //     host = await Host.findOne({ email: emailOrPhone },'-cpassword');
+  //   } else {
+  //     host = await Host.findOne({ phone: emailOrPhone },'-cpassword');
+  //   }
+
+  //   if (!host) {
+  //     return res.status(404).json({ message: "Host not found", success: false });
+  //   }
+
+  //   // Check if the provided password matches
+  //   const isMatch = await bcrypt.compare(password, host.password);
+  //   if (!isMatch) {
+  //     return res.status(401).json({ message: "Invalid password", success: false });
+  //   }
+
+  //      // Hide the password field from the output
+  //      const hostWithoutPassword = { ...host._doc };
+  //      delete hostWithoutPassword.password;
+
+  //   // If the credentials are correct, return a success message or host data
+  //   return res.status(200).json({ message: "Login successful", success: true , host: hostWithoutPassword});
+  // } catch (error) {
+  //   console.error(error);
+  //   return res.status(500).json({ message: "Internal server error", success: false });
+  // }

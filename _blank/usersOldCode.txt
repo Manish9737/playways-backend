@@ -1,0 +1,61 @@
+var express = require("express");
+const upload = require("../../middlewares/singleFileUpload");
+const passport = require("passport"); 
+const setupGoogleStrategy = require("../../middlewares/googleStrategy");
+const {
+  registerUser,
+  loginUser,
+  deleteUser,
+  allUsers,
+  uploadImg,
+  forgotPassword,
+  resetPassword,
+  userDetails,
+  updateProfile,
+  fetchOTP,
+  contactUs,
+  findGameStationById,
+  getAllBookingsByUserId,
+} = require("../../controller/users/userController");
+var router = express.Router();
+
+require("dotenv").config();
+setupGoogleStrategy(passport);
+
+
+router.post("/register", registerUser); // Register new User
+router.post("/login", loginUser); // login User
+router.get("/details/:id", userDetails); // User Details
+router.put("/update/:id", upload("images").single("ProfileImg"), updateProfile); // Update User Profile
+router.post("/forgot-password", forgotPassword); // Forgot User password
+router.post("/reset-password", resetPassword); // Reset User password
+router.post("/fetchOtp", fetchOTP); // fetch otp
+router.delete("/delete/:id", deleteUser); // Delete User
+router.get("/allUsers", allUsers); // All Users
+router.post("/upload/:id", upload("images").single("image"), uploadImg); // upload Profileimage
+router.post("/contactUs", contactUs); // Contact Us
+router.get("/:userId/gameStation/:id/", findGameStationById); // gs increase views
+router.get("/:userId/bookings", getAllBookingsByUserId); // gs increase views
+
+
+router.get('/auth/google', async (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000'); // Set the correct origin
+  passport.authenticate('google-login', {
+    scope: ['profile', 'email'] // Define the required scope here
+  })(req, res);
+});
+
+router.get('/auth/google/callback', passport.authenticate('google-login', {
+  successRedirect: 'http://localhost:3000/addPassword', // Redirect to home upon successful authentication
+  failureRedirect: 'http://localhost:3000/user/login', // Redirect to login page on failure
+}));
+
+router.get('/protected', (req, res, next) => {
+  if (req.isAuthenticated()) {
+    res.json({ message: 'Access granted to protected route', user: req.user });
+  } else {
+    res.status(401).json({ message: 'Unauthorized' });
+  }
+});
+
+module.exports = router;

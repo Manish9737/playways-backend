@@ -39,7 +39,10 @@ app.use(
 
 
 const corsOptions = {
-  origin: "*", 
+  origin: [ 
+    "https://playways-app.web.app",
+    "*",
+    ], 
   methods: "GET,POST,PUT,DELETE", 
   credentials: true,
   optionsSuccessStatus: 204, 

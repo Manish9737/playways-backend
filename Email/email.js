@@ -2,6 +2,9 @@ const nodemailer = require("nodemailer");
 const path = require("path");
 require("dotenv").config();
 
+console.log("ENV Email:", process.env.Email);
+console.log("ENV Password exists:", !!process.env.PasswordEmail);
+
 const sendEmail = async (to, subject, content) => {
   try {
 

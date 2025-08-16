@@ -12,7 +12,7 @@ const sendEmail = async (to, subject, content) => {
       service: "gmail",
       auth: {
         user: process.env.Email,
-        pass: process.env.PasswordEmail,
+        pass: process.env.PassWordEmail,
       },
     });
 

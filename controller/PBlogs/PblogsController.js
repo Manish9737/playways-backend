@@ -50,11 +50,8 @@ const getBlogById = async (req, res) => {
   }
 };
 
-const updateBlog = async (req, res, next) => {
-  const { adminId } = req.params;
-  const { id } = req.params;
-  const updateData = req.body;
-
+const updateBlog = async (req, res) => {
+  const { adminId, id } = req.params;
   try {
     const blog = await Blog.findById(id);
 
@@ -64,23 +61,34 @@ const updateBlog = async (req, res, next) => {
         .json({ message: "Blog not found", success: false });
     }
 
-    Object.assign(blog, updateData);
+    // If new image uploaded, update image path
+    if (req.file) {
+      const { filename } = req.file;
+      blog.image = `/images/${filename}`;
+    }
+
+    // Update other fields
+    const { title, content } = req.body;
+    if (title) blog.title = title;
+    if (content) blog.content = content;
 
     await blog.save();
 
+    // Save activity log
     const activity = new Activity({
       adminId: adminId,
       activityType: "Blog updated",
       actionType: "update",
     });
-
     await activity.save();
 
-    return res
-      .status(200)
-      .json({ message: "Blog data updated successfully", success: true, blog });
+    return res.status(200).json({
+      message: "Blog updated successfully",
+      success: true,
+      blog,
+    });
   } catch (error) {
-    console.error(error);
+    console.error("Error updating blog:", error);
     return res
       .status(500)
       .json({ message: "Internal server error", success: false });

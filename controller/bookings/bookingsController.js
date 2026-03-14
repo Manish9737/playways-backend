@@ -199,11 +199,11 @@ const updateBookingStatus = async (req, res) => {
 
     await Activity.create({
       adminId: adminId,
-      activityType: `Booking #${id} updated: ${changes.join(", ")}`,
+      activityType: `Booking #${bookingId} updated: ${changes.join(", ")}`,
       actionType: "update",
     });
 
-    const updatedBooking = await Booking.findById(id)
+    const updatedBooking = await Booking.findById(bookingId)
       .populate("userId", "userName email phone")
       .populate("gameStationId", "name city")
       .populate("game", "name image")

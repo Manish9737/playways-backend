@@ -137,7 +137,7 @@ const getBookingById = async (req, res) => {
 
 const updateBookingStatus = async (req, res) => {
   try {
-    const { id, adminId } = req.params;
+    const { bookingId, adminId } = req.params;
     const { status, paymentStatus } = req.body;
 
     if (!status && !paymentStatus) {
@@ -165,7 +165,7 @@ const updateBookingStatus = async (req, res) => {
       });
     }
 
-    const booking = await Booking.findById(id);
+    const booking = await Booking.findById(bookingId);
     if (!booking) {
       return res
         .status(404)

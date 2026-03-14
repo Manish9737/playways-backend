@@ -48,6 +48,44 @@ const allBookings = async (req, res, next) => {
   }
 };
 
+const getAllBookings = async (req, res) => {
+  try {
+    const { status, paymentStatus, page = 1, limit = 10, search } = req.query;
+
+    const filter = {};
+    if (status) filter.status = status;
+    if (paymentStatus) filter.paymentStatus = paymentStatus;
+
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    let query = Booking.find(filter)
+      .populate("userId", "userName email phone")
+      .populate("gameStationId", "name city address")
+      .populate("game", "name image")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    const [bookings, total] = await Promise.all([
+      query.lean(),
+      Booking.countDocuments(filter),
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      data: bookings,
+      pagination: {
+        total,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        totalPages: Math.ceil(total / parseInt(limit)),
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 const cancelBooking = async (req, res, next) => {
   const { bookingId } = req.params;
 
@@ -76,8 +114,100 @@ const cancelBooking = async (req, res, next) => {
   }
 };
 
+const getBookingById = async (req, res) => {
+  try {
+    const booking = await Booking.findById(req.params.id)
+      .populate("userId", "userName email phone ProfileImg")
+      .populate("gameStationId", "name city address phone email gsLogo")
+      .populate("game", "name image")
+      .lean();
+
+    if (!booking) {
+      return res.status(404).json({ success: false, message: "Booking not found" });
+    }
+
+    return res.status(200).json({ success: true, data: booking });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+const updateBookingStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, paymentStatus } = req.body;
+
+    const validStatuses = ["pending", "booked", "cancelled"];
+    const validPaymentStatuses = ["pending", "successfull", "failed"];
+
+    if (status && !validStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid status. Must be one of: ${validStatuses.join(", ")}`,
+      });
+    }
+
+    if (paymentStatus && !validPaymentStatuses.includes(paymentStatus)) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid payment status. Must be one of: ${validPaymentStatuses.join(", ")}`,
+      });
+    }
+
+    const booking = await Booking.findById(id);
+    if (!booking) {
+      return res.status(404).json({ success: false, message: "Booking not found" });
+    }
+
+    const previousStatus = booking.status;
+
+    if (status) booking.status = status;
+    if (paymentStatus) booking.paymentStatus = paymentStatus;
+
+    await booking.save();
+
+    if (status === "cancelled" && previousStatus !== "cancelled") {
+      await Slot.updateOne(
+        { "slots.bookingid": booking._id },
+        {
+          $set: {
+            "slots.$.status": "Available",
+            "slots.$.bookingid": null,
+            "slots.$.paymentid": null,
+          },
+        }
+      );
+    }
+
+    if (req.admin) {
+      await Activity.create({
+        adminId: req.admin._id,
+        activityType: `Booking #${id} status updated to ${status || paymentStatus}`,
+        actionType: "update",
+      });
+    }
+
+    const updatedBooking = await Booking.findById(id)
+      .populate("userId", "userName email phone")
+      .populate("gameStationId", "name city")
+      .populate("game", "name image")
+      .lean();
+
+    return res.status(200).json({
+      success: true,
+      message: "Booking updated successfully",
+      data: updatedBooking,
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 module.exports = {
+  getAllBookings,
   addBooking,
   allBookings,
-  cancelBooking
+  cancelBooking,
+  getBookingById,
+  updateBookingStatus,
 };

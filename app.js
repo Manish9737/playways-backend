@@ -21,6 +21,7 @@ var blogRouter = require("./routes/blog/blog");
 var slotRouter = require("./routes/slots/slots");
 var paymentRouter = require("./routes/payment/payment");
 var bankDetailsRouter = require("./routes/bankDetails/bankDetails");
+var DashboardRouter = require("./routes/Dashboard/Dashboard");
 
 const Razorpay = require('razorpay');
 
@@ -63,6 +64,7 @@ app.use(cors(corsOptions));
 
 app.use("/images", express.static("public/images"));
 app.use("/", indexRouter);
+app.use("/dashboard", DashboardRouter);
 app.use("/users", usersRouter);
 app.use("/hosts", hostRouter);
 app.use("/quotes", quoteRouter);

@@ -51,6 +51,7 @@ const {
 const { checkSuperUser } = require("../../middlewares/adminAuth");
 const upload = require("../../middlewares/singleFileUpload");
 const { getAllBlogs, createBlog, updateBlog, deleteBlog } = require("../../controller/PBlogs/PblogsController");
+const { updateBookingStatus } = require("../../controller/bookings/bookingsController");
 
 router.post("/register", registerAdmin); // Register new Admin
 router.post("/login", loginAdmin); // Login Admin
@@ -102,5 +103,7 @@ router.delete("/gameStations/:adminId/delete/:id", deleteGameStation);
 router.get("/gameStations/:id/stations", getCountOfStationsById);
 router.get("/gameStations/getallstationbyhostId/:id", getAllGsByHostId);
 router.get("/gameStations/:id", getGsById);
+
+router.put("/booking/:bookingId/updateStatus/:adminId", updateBookingStatus); // update booking status
 
 module.exports = router;

@@ -97,11 +97,12 @@ const cancelBooking = async (req, res, next) => {
     }
 
     const today = new Date();
-    today.setHours(0, 0, 0, 0); 
+    today.setHours(0, 0, 0, 0);
 
     if (new Date(booking.slotDate) <= today) {
       return res.status(400).json({
-        message: "Booking cannot be canceled on the day of the booking or after",
+        message:
+          "Booking cannot be canceled on the day of the booking or after",
       });
     }
 
@@ -123,7 +124,9 @@ const getBookingById = async (req, res) => {
       .lean();
 
     if (!booking) {
-      return res.status(404).json({ success: false, message: "Booking not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Booking not found" });
     }
 
     return res.status(200).json({ success: true, data: booking });
@@ -134,8 +137,16 @@ const getBookingById = async (req, res) => {
 
 const updateBookingStatus = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { id, adminId } = req.params;
     const { status, paymentStatus } = req.body;
+
+    if (!status && !paymentStatus) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Provide at least one field to update: status or paymentStatus",
+      });
+    }
 
     const validStatuses = ["pending", "booked", "cancelled"];
     const validPaymentStatuses = ["pending", "successfull", "failed"];
@@ -156,7 +167,9 @@ const updateBookingStatus = async (req, res) => {
 
     const booking = await Booking.findById(id);
     if (!booking) {
-      return res.status(404).json({ success: false, message: "Booking not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Booking not found" });
     }
 
     const previousStatus = booking.status;
@@ -175,17 +188,19 @@ const updateBookingStatus = async (req, res) => {
             "slots.$.bookingid": null,
             "slots.$.paymentid": null,
           },
-        }
+        },
       );
     }
 
-    if (req.admin) {
-      await Activity.create({
-        adminId: req.admin._id,
-        activityType: `Booking #${id} status updated to ${status || paymentStatus}`,
-        actionType: "update",
-      });
-    }
+    const changes = [];
+    if (status) changes.push(`status → ${status}`);
+    if (paymentStatus) changes.push(`paymentStatus → ${paymentStatus}`);
+
+    await Activity.create({
+      adminId: adminId,
+      activityType: `Booking #${id} updated: ${changes.join(", ")}`,
+      actionType: "update",
+    });
 
     const updatedBooking = await Booking.findById(id)
       .populate("userId", "userName email phone")
@@ -198,6 +213,7 @@ const updateBookingStatus = async (req, res) => {
       message: "Booking updated successfully",
       data: updatedBooking,
     });
+
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
   }

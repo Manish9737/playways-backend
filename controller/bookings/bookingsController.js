@@ -2,6 +2,7 @@ const Booking = require("../../model/bookingSchema");
 const Slot = require("../../model/slotsSchema");
 const GameStation = require("../../model/gsSchema");
 const Game = require("../../model/gameSchema");
+const Activity = require("../../model/activitySchema");
 
 const addBooking = async (req, res, next) => {
   const { gameStationId } = req.params;

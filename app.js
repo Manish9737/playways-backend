@@ -40,9 +40,7 @@ app.use(
   })
 );
 
-securityMiddleware(app);
-app.use(rateLimiter);
-app.use(compression());
+
 
 const corsOptions = {
   origin: [ 
@@ -65,7 +63,10 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 app.use(cors(corsOptions));
-app.set("trust proxy", 1);  
+app.set("trust proxy", 1); 
+securityMiddleware(app);
+app.use(rateLimiter);
+app.use(compression());
 
 app.use("/images", express.static("public/images"));
 app.use("/", indexRouter);

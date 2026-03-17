@@ -2,10 +2,6 @@ const Activity = require("../../model/activitySchema");
 const Blog = require("../../model/blogSchema");
 const deleteCloudinaryImage = require("../../utils/deleteCloudinaryImage");
 const uploadImage = require("../../utils/uploadImage");
-const redis = require("../../config/redis");
-
-const BLOGS_ALL_KEY = "blogs:all";
-const BLOG_BY_ID_KEY = (id) => `blogs:${id}`;
 
 const createBlog = async (req, res) => {
   const { adminId } = req.params;
@@ -141,9 +137,7 @@ const deleteBlog = async (req, res) => {
     const blog = await Blog.findById(id);
 
     if (!blog) {
-      return res
-        .status(404)
-        .json({ message: "Blog not found", success: false });
+      return res.status(404).json({ message: "Blog not found", success: false });
     }
 
     if (blog.image) {

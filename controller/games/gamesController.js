@@ -1,9 +1,6 @@
 const uploadImage = require("../../utils/uploadImage");
 const Game = require("../../model/gameSchema");
 const deleteCloudinaryImage = require("../../utils/deleteCloudinaryImage");
-const redis = require("../../config/redis");
-
-const GAMES_CACHE_KEY = "games:all";
 
 const addGame = async (req, res, next) => {
   try {
@@ -110,12 +107,7 @@ const deleteGame = async (req, res, next) => {
     await deleteCloudinaryImage(game.image);
 
     await Game.findByIdAndDelete(id);
-
-    await redis.del(GAMES_CACHE_KEY);
-
-    res
-      .status(200)
-      .json({ message: "Game deleted successfully", success: true });
+    res.status(200).json({ message: "Game deleted successfully", success: true });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Internal server error", success: false });

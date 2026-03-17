@@ -1,4 +1,7 @@
 const Qoute = require("../../model/quoteSchema");
+const redis = require("../../config/redis");
+
+const QUOTES_KEY = "quotes:all";
 
 const addQuotes = async (req, res, next) => {
   const { name, quote } = req.body;
@@ -16,6 +19,9 @@ const addQuotes = async (req, res, next) => {
       const quotes = new Qoute({ name, quote });
 
       await quotes.save();
+
+      await redis.del(QUOTES_KEY);
+
       return res
         .status(200)
         .json({ message: "Quote is saved successfully.", success: true });
@@ -30,9 +36,23 @@ const addQuotes = async (req, res, next) => {
 
 const getallQuotes = async (req, res, next) => {
   try {
+    const cached = await redis.get(QUOTES_KEY);
+
+    if (cached) {
+      return res.status(200).json({
+        source: "cache",
+        quotes: JSON.parse(cached),
+      });
+    }
+
     const quotes = await Qoute.find();
 
-    res.status(200).json({ quotes });
+    await redis.set(QUOTES_KEY, JSON.stringify(quotes), { ex: 300 });
+
+    res.status(200).json({
+      source: "db",
+      quotes,
+    });
   } catch (err) {
     return res
       .status(500)
@@ -48,13 +68,15 @@ const updateQuote = async (req, res, next) => {
     const updatedQuote = await Qoute.findByIdAndUpdate(
       quoteId,
       { name, quote },
-      { new: true }
+      { new: true },
     );
 
     if (!updatedQuote) {
       return res.status(404).json({ error: "Quote not found" });
     }
 
+    await redis.del(QUOTES_KEY);
+    
     return res
       .status(200)
       .json({ message: "Quote updated successfully", quote: updatedQuote });

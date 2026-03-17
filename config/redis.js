@@ -1,0 +1,8 @@
+const { Redis } = require("@upstash/redis");
+
+const redis = new Redis({
+  url: process.env.REDIS_REST_URL,
+  token: process.env.REDIS_REST_TOKEN,
+});
+
+module.exports = redis;

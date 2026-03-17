@@ -7,6 +7,7 @@ var cookieParser = require("cookie-parser");
 var logger = require("morgan");
 var cors = require("cors");
 const session = require("express-session");
+const compression = require("compression");
 
 var indexRouter = require("./routes/index/index");
 var usersRouter = require("./routes/users/users");
@@ -26,8 +27,10 @@ var DashboardRouter = require("./routes/Dashboard/Dashboard");
 const Razorpay = require('razorpay');
 
 require("./DB/conn");
-
 require("./middlewares/passportConfig");
+
+const securityMiddleware = require("./middlewares/security");
+const rateLimiter = require("./middlewares/rateLimiter");
 
 var app = express();
 
@@ -39,6 +42,9 @@ app.use(
   })
 );
 
+securityMiddleware(app);
+app.use(rateLimiter);
+app.use(compression());
 
 const corsOptions = {
   origin: [ 
@@ -57,7 +63,7 @@ app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "jade");
 
 app.use(logger("dev"));
-app.use(express.json());
+app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));

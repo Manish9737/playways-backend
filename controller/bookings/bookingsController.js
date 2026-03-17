@@ -3,6 +3,11 @@ const Slot = require("../../model/slotsSchema");
 const GameStation = require("../../model/gsSchema");
 const Game = require("../../model/gameSchema");
 const Activity = require("../../model/activitySchema");
+const redis = require("../../config/redis");
+
+const BOOKINGS_CACHE_KEY = "bookings:all";
+const BOOKING_KEY = (id) => `booking:${id}`;
+const BOOKINGS_LIST_KEY = (query) => `bookings:list:${JSON.stringify(query)}`;
 
 const addBooking = async (req, res, next) => {
   const { gameStationId } = req.params;
@@ -21,6 +26,8 @@ const addBooking = async (req, res, next) => {
 
     await newBooking.save();
 
+    await redis.del(BOOKINGS_CACHE_KEY);
+
     res.status(201).json({
       message: "Booking created successfully",
       success: true,
@@ -37,12 +44,26 @@ const addBooking = async (req, res, next) => {
 
 const allBookings = async (req, res, next) => {
   try {
+    const cachedData = await redis.get(BOOKINGS_CACHE_KEY);
+
+    if (cachedData) {
+      return res.status(200).json({
+        success: true,
+        source: "cache",
+        bookings: JSON.parse(cachedData),
+      });
+    }
+
     const bookings = await Booking.find()
       .populate("userId")
       .populate("gameStationId")
       .populate("game");
 
-    res.status(200).json({ bookings });
+    await redis.set(BOOKINGS_CACHE_KEY, JSON.stringify(bookings), {
+      ex: 60,
+    });
+
+    res.status(200).json({ success: true, source: "db", bookings });
   } catch (error) {
     console.error("Error fetching bookings:", error);
     res.status(500).json({ message: "Internal server error" });
@@ -52,6 +73,17 @@ const allBookings = async (req, res, next) => {
 const getAllBookings = async (req, res) => {
   try {
     const { status, paymentStatus, page = 1, limit = 10, search } = req.query;
+
+    const queryKey = BOOKINGS_LIST_KEY({ status, paymentStatus, page, limit });
+
+    const cached = await redis.get(queryKey);
+    if (cached) {
+      return res.json({
+        success: true,
+        source: "cache",
+        ...JSON.parse(cached),
+      });
+    }
 
     const filter = {};
     if (status) filter.status = status;
@@ -72,15 +104,22 @@ const getAllBookings = async (req, res) => {
       Booking.countDocuments(filter),
     ]);
 
-    return res.status(200).json({
-      success: true,
+    const response = {
       data: bookings,
       pagination: {
         total,
         page: parseInt(page),
         limit: parseInt(limit),
-        totalPages: Math.ceil(total / parseInt(limit)),
+        totalPages: Math.ceil(total / limit),
       },
+    };
+
+    await redis.set(queryKey, JSON.stringify(response), { ex: 60 });
+
+    return res.status(200).json({
+      success: true,
+      data: bookings,
+      ...response,
     });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
@@ -109,6 +148,9 @@ const cancelBooking = async (req, res, next) => {
 
     await Booking.findByIdAndDelete(bookingId);
 
+    await redis.del(BOOKING_KEY(bookingId));
+    await redis.del(BOOKINGS_CACHE_KEY);
+
     res.status(200).json({ message: "Booking canceled successfully" });
   } catch (error) {
     console.error("Error canceling booking:", error);
@@ -118,6 +160,18 @@ const cancelBooking = async (req, res, next) => {
 
 const getBookingById = async (req, res) => {
   try {
+    const key = BOOKING_KEY(req.params.id);
+
+    const cached = await redis.get(key);
+
+    if (cached) {
+      return res.json({
+        success: true,
+        source: "cache",
+        data: JSON.parse(cached),
+      });
+    }
+
     const booking = await Booking.findById(req.params.id)
       .populate("userId", "userName email phone ProfileImg")
       .populate("gameStationId", "name city address phone email gsLogo")
@@ -130,7 +184,9 @@ const getBookingById = async (req, res) => {
         .json({ success: false, message: "Booking not found" });
     }
 
-    return res.status(200).json({ success: true, data: booking });
+    await redis.set(key, JSON.stringify(booking), { ex: 120 });
+
+    return res.status(200).json({ success: true, source: "db", data: booking });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
   }
@@ -209,12 +265,14 @@ const updateBookingStatus = async (req, res) => {
       .populate("game", "name image")
       .lean();
 
+    await redis.del(BOOKING_KEY(bookingId));
+    await redis.del(BOOKINGS_CACHE_KEY);
+
     return res.status(200).json({
       success: true,
       message: "Booking updated successfully",
       data: updatedBooking,
     });
-
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
   }

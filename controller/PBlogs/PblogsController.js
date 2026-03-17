@@ -2,6 +2,10 @@ const Activity = require("../../model/activitySchema");
 const Blog = require("../../model/blogSchema");
 const deleteCloudinaryImage = require("../../utils/deleteCloudinaryImage");
 const uploadImage = require("../../utils/uploadImage");
+const redis = require("../../config/redis");
+
+const BLOGS_ALL_KEY = "blogs:all";
+const BLOG_BY_ID_KEY = (id) => `blogs:${id}`;
 
 const createBlog = async (req, res) => {
   const { adminId } = req.params;
@@ -24,6 +28,8 @@ const createBlog = async (req, res) => {
 
     await activity.save();
 
+    redis.del(BLOGS_ALL_KEY);
+
     res.status(201).json(savedBlog);
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
@@ -32,8 +38,23 @@ const createBlog = async (req, res) => {
 
 const getAllBlogs = async (req, res) => {
   try {
+    const cached = await redis.get(BLOGS_ALL_KEY);
+
+    if (cached) {
+      return res.json({
+        source: "cache",
+        blogs: JSON.parse(cached),
+      });
+    }
+
     const blogs = await Blog.find();
-    res.json(blogs);
+
+    await redis.set(BLOGS_ALL_KEY, JSON.stringify(blogs), { ex: 300 });
+
+    res.json({
+      source: "db",
+      blogs,
+    });
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
   }
@@ -41,11 +62,27 @@ const getAllBlogs = async (req, res) => {
 
 const getBlogById = async (req, res) => {
   try {
-    const blog = await Blog.findById(req.params.id);
+    const { id } = req.params;
+
+    const cached = await redis.get(BLOG_BY_ID_KEY(id));
+    if (cached) {
+      return res.json({
+        source: "cache",
+        blog: JSON.parse(cached),
+      });
+    }
+
+    const blog = await Blog.findById(id);
     if (!blog) {
       return res.status(404).json({ error: "Blog not found" });
     }
-    res.json(blog);
+
+    await redis.set(BLOG_BY_ID_KEY(id), JSON.stringify(blog), { ex: 300 });
+
+    res.json({
+      source: "db",
+      blog,
+    });
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
   }
@@ -80,6 +117,9 @@ const updateBlog = async (req, res) => {
     });
     await activity.save();
 
+    await redis.del(BLOGS_ALL_KEY);
+    await redis.del(BLOG_BY_ID_KEY(id));
+
     return res.status(200).json({
       message: "Blog updated successfully",
       success: true,
@@ -101,7 +141,9 @@ const deleteBlog = async (req, res) => {
     const blog = await Blog.findById(id);
 
     if (!blog) {
-      return res.status(404).json({ message: "Blog not found", success: false });
+      return res
+        .status(404)
+        .json({ message: "Blog not found", success: false });
     }
 
     if (blog.image) {
@@ -120,6 +162,10 @@ const deleteBlog = async (req, res) => {
     });
 
     await activity.save();
+
+    await redis.del(BLOGS_ALL_KEY);
+    await redis.del(BLOG_BY_ID_KEY(id));
+
     res.json({ message: "Blog deleted successfully" });
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });

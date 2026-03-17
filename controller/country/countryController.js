@@ -1,6 +1,12 @@
 const Country = require("../../model/countrySchema");
-const State = require('../../model/stateSchema');
-const City = require('../../model/citySchema')
+const State = require("../../model/stateSchema");
+const City = require("../../model/citySchema");
+const redis = require("../../config/redis");
+
+const COUNTRIES_KEY = "geo:countries";
+const STATES_KEY = "geo:states";
+const CITIES_KEY = "geo:cities";
+const ALL_DATA_KEY = "geo:all";
 
 const addCountry = async (req, res, next) => {
   try {
@@ -34,10 +40,19 @@ const addCountry = async (req, res, next) => {
     savedCountry.states = createdStates;
     await savedCountry.save();
 
-    return res.status(200).json({ message: 'Data added successfully', success: true });
+    await redis.del(COUNTRIES_KEY);
+    await redis.del(STATES_KEY);
+    await redis.del(CITIES_KEY);
+    await redis.del(ALL_DATA_KEY);
+
+    return res
+      .status(200)
+      .json({ message: "Data added successfully", success: true });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: 'Internal server error', success: false });
+    return res
+      .status(500)
+      .json({ error: "Internal server error", success: false });
   }
 };
 
@@ -76,61 +91,129 @@ const addCities = async (req, res) => {
       await state.save();
     }
 
-    return res.status(200).json({ message: 'Cities added successfully', success: true });
+    await redis.del(COUNTRIES_KEY);
+    await redis.del(STATES_KEY);
+    await redis.del(CITIES_KEY);
+    await redis.del(ALL_DATA_KEY);
+
+    return res
+      .status(200)
+      .json({ message: "Cities added successfully", success: true });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: 'Internal server error', success: false });
+    return res
+      .status(500)
+      .json({ error: "Internal server error", success: false });
   }
 };
 
 const getCountries = async (req, res, next) => {
   try {
-    const countries = await Country.find({},' -states -__v');
-    res.status(200).json({ countries, success: true });
+    const cached = await redis.get(COUNTRIES_KEY);
+
+    if (cached) {
+      return res.status(200).json({
+        success: true,
+        source: "cache",
+        countries: JSON.parse(cached),
+      });
+    }
+    const countries = await Country.find({}, " -states -__v");
+    await redis.set(COUNTRIES_KEY, JSON.stringify(countries), { ex: 3600 });
+
+    res.status(200).json({
+      success: true,
+      source: "db",
+      countries,
+    });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Internal server error', success: false });
+    res.status(500).json({ message: "Internal server error", success: false });
   }
 };
 
 const getStates = async (req, res, next) => {
   try {
-    const states = await State.find({},' -cities -__v');
-    res.status(200).json({ states, success: true });
+    const cached = await redis.get(STATES_KEY);
+
+    if (cached) {
+      return res.json({
+        success: true,
+        source: "cache",
+        states: JSON.parse(cached),
+      });
+    }
+
+    const states = await State.find({}, " -cities -__v");
+
+    await redis.set(STATES_KEY, JSON.stringify(states), { ex: 3600 });
+
+    res.json({ success: true, source: "db", states });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Internal server error', success: false });
+    res.status(500).json({ message: "Internal server error", success: false });
   }
 };
 
 const getCities = async (req, res, next) => {
   try {
-    const cities = await City.find({},'  -__v' );
-    res.status(200).json({ cities, success: true });
+    const cached = await redis.get(CITIES_KEY);
+
+    if (cached) {
+      return res.json({
+        success: true,
+        source: "cache",
+        cities: JSON.parse(cached),
+      });
+    }
+
+    const cities = await City.find({}, "  -__v");
+
+    await redis.set(CITIES_KEY, JSON.stringify(cities), { ex: 3600 });
+
+    res.json({ success: true, source: "db", cities });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Internal server error', success: false });
+    res.status(500).json({ message: "Internal server error", success: false });
   }
 };
 
-const getAllData =  async (req, res) => {
+const getAllData = async (req, res) => {
   try {
-    const countriesWithStatesAndCities = await Country.find({},'-_id -__v ')
-      .populate({
-        path: 'states',
-        populate: {
-          path: 'cities'
-        }
-      });
+    const cached = await redis.get(ALL_DATA_KEY);
 
-    if (!countriesWithStatesAndCities) {
-      return res.status(404).json({ message: 'No data found', success: false });
+    if (cached) {
+      return res.json({
+        success: true,
+        source: "cache",
+        countries: JSON.parse(cached),
+      });
     }
 
-    res.status(200).json({ countries: countriesWithStatesAndCities, success: true });
+    const countriesWithStatesAndCities = await Country.find(
+      {},
+      "-_id -__v ",
+    ).populate({
+      path: "states",
+      populate: {
+        path: "cities",
+      },
+    });
+
+    if (!countriesWithStatesAndCities) {
+      return res.status(404).json({ message: "No data found", success: false });
+    }
+
+    await redis.set(ALL_DATA_KEY, JSON.stringify(data), { ex: 3600 });
+
+    res.json({
+      success: true,
+      source: "db",
+      countries: data,
+    });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Internal server error', success: false });
+    res.status(500).json({ message: "Internal server error", success: false });
   }
 };
 
@@ -146,6 +229,9 @@ const updateCountry = async (req, res, next) => {
     if (!updatedCountry) {
       return res.status(404).json({ error: "Country not found" });
     }
+
+    await redis.del(COUNTRIES_KEY);
+    await redis.del(ALL_DATA_KEY);
 
     res
       .status(200)
@@ -163,5 +249,5 @@ module.exports = {
   addCities,
   getCountries,
   getStates,
-  getCities
+  getCities,
 };

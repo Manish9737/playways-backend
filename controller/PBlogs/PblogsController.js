@@ -1,18 +1,19 @@
 const Activity = require("../../model/activitySchema");
 const Blog = require("../../model/blogSchema");
+const deleteCloudinaryImage = require("../../utils/deleteCloudinaryImage");
+const uploadImage = require("../../utils/uploadImage");
 
 const createBlog = async (req, res) => {
   const { adminId } = req.params;
   try {
-    let imgPath = null;
+    let imageUrl = null;
 
     if (req.file) {
-      const { filename } = req.file;
-      imgPath = `/images/${filename}`;
+      imageUrl = await uploadImage(req.file, "blogs");
     }
 
     const { title, content } = req.body;
-    const blog = new Blog({ title, content, image: imgPath });
+    const blog = new Blog({ title, content, image: imageUrl });
     const savedBlog = await blog.save();
 
     const activity = new Activity({
@@ -61,20 +62,17 @@ const updateBlog = async (req, res) => {
         .json({ message: "Blog not found", success: false });
     }
 
-    // If new image uploaded, update image path
     if (req.file) {
-      const { filename } = req.file;
-      blog.image = `/images/${filename}`;
+      const imageUrl = await uploadImage(req.file, "blogs");
+      blog.image = imageUrl;
     }
 
-    // Update other fields
     const { title, content } = req.body;
     if (title) blog.title = title;
     if (content) blog.content = content;
 
     await blog.save();
 
-    // Save activity log
     const activity = new Activity({
       adminId: adminId,
       activityType: "Blog updated",
@@ -100,6 +98,16 @@ const deleteBlog = async (req, res) => {
   const { adminId } = req.params;
 
   try {
+    const blog = await Blog.findById(id);
+
+    if (!blog) {
+      return res.status(404).json({ message: "Blog not found", success: false });
+    }
+
+    if (blog.image) {
+      await deleteCloudinaryImage(blog.image);
+    }
+
     const deletedBlog = await Blog.findByIdAndDelete(id);
     if (!deletedBlog) {
       return res.status(404).json({ error: "Blog not found" });

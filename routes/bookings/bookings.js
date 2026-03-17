@@ -8,10 +8,10 @@ const {
 } = require("../../controller/bookings/bookingsController");
 const router = express.Router();
 
-router.post("/:gameStationId/addBooking", addBooking); // add Booking
-router.get("/allBookings", allBookings); // get all booking
-router.delete("/:bookingId/cancel", cancelBooking); // cancel booking
-router.get("/:bookingId", getBookingById); // get booking by id
-// router.put("/:bookingId/updateStatus", updateBookingStatus); // update booking status
+router.post("/:gameStationId/addBooking", addBooking);
+router.get("/allBookings", allBookings);
+router.delete("/:bookingId/cancel", cancelBooking);
+router.get("/:bookingId", getBookingById);
+// router.put("/:bookingId/updateStatus", updateBookingStatus); 
 
 module.exports = router;

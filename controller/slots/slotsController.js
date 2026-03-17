@@ -60,7 +60,6 @@ const updateSlots = async (req, res, next) => {
         );
 
         if (existingSlotIndex === -1) {
-          // Slot not found in existing slots array
           return res.status(404).json({ message: "Slot not found" });
         }
 

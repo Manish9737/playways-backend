@@ -1,13 +1,19 @@
+const uploadImage = require("../../utils/uploadImage");
 const Game = require("../../model/gameSchema");
+const deleteCloudinaryImage = require("../../utils/deleteCloudinaryImage");
 
 const addGame = async (req, res, next) => {
   try {
     const { name, type, timing, description, slotPrice } = req.body;
-    const image = req.file ? req.file.filename : "";
-    const imgPath = `/images/${image}`;
+
+    let imageUrl = null;
+
+    if (req.file) {
+      imageUrl = await uploadImage(req.file, "games");
+    }
 
     const newGame = new Game({
-      image: imgPath,
+      image: imageUrl,
       name,
       type,
       timing,
@@ -52,10 +58,8 @@ const updateGame = async (req, res, next) => {
     }
 
     if (req.file) {
-      const filePath = req.file.filename;
-      console.log(filePath)
-      const path = `/images/${filePath}`
-      updateData.image = path;
+      const imageUrl = await uploadImage(req.file, "games");
+      updateData.image = imageUrl;
     }
 
     Object.assign(game, updateData);
@@ -74,11 +78,22 @@ const updateGame = async (req, res, next) => {
 const deleteGame = async (req, res, next) => {
   const { id } = req.params;
   try {
+    const game = await Game.findById(id);
+
+    if (!game) {
+      return res.status(404).json({
+        message: "Game not found",
+        success: false,
+      });
+    }
+
+    await deleteCloudinaryImage(game.image);
+
     await Game.findByIdAndDelete(id);
-    res.status(200).json({ message: "Game deleted successfully" });
+    res.status(200).json({ message: "Game deleted successfully", success: true });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ error: "Internal server error", success: false });
   }
 };
 

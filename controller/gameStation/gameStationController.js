@@ -3,15 +3,14 @@ const GameStation = require("../../model/gsSchema");
 const Game = require("../../model/gameSchema");
 const Booking = require("../../model/bookingSchema");
 const Slot = require("../../model/slotsSchema");
+const uploadImage = require("../../utils/uploadImage");
 
 const addGameStation = async (req, res, next) => {
   try {
-    let imgPath = null;
+    let imageUrl = null;
 
     if (req.file) {
-      const gsLogoFilename = req.file.filename;
-      imgPath = `/images/${gsLogoFilename}`;
-      console.log(gsLogoFilename);
+      imageUrl = await uploadImage(req.file, "gameStations");
     }
 
     const {
@@ -49,7 +48,7 @@ const addGameStation = async (req, res, next) => {
       name,
       email,
       phone,
-      gsLogo: imgPath,
+      gsLogo: imageUrl,
       city,
       state,
       country,
@@ -58,7 +57,6 @@ const addGameStation = async (req, res, next) => {
       address,
     });
 
-    // console.log(GameStations);
     await GameStations.save();
     console.log("Game Station is added.");
     return res.status(200).json({
@@ -165,9 +163,8 @@ const updateGameStation = async (req, res, next) => {
     }
 
     if (req.file) {
-      const imgFileName = req.file.filename;
-      const imgPath = `/images/${imgFileName}`;
-      gameStation.gsLogo = imgPath;
+      const imageUrl = await uploadImage(req.file, "gameStations")
+      gameStation.gsLogo = imageUrl;
     }
 
     Object.assign(gameStation, updateData);
@@ -235,6 +232,17 @@ const deleteGameStation = async (req, res, next) => {
   const gameStationId = req.params.id;
 
   try {
+    const gameStation = await GameStation.findById(gameStationId);
+    if (!gameStation) {
+      return res
+        .status(404)
+        .json({ message: "GameStation not found", success: false });
+    }
+
+    if(gameStation.gsLogo) {
+      await deleteCloudinaryImage(gameStation.gsLogo);
+    }
+
     const deletedGameStation = await GameStation.findByIdAndDelete(
       gameStationId
     );
@@ -259,20 +267,19 @@ const deleteGameStation = async (req, res, next) => {
 const addPhotoToGameStation = async (req, res, next) => {
   try {
     const gameStationId = req.params.id;
-    const photo = req.file ? req.file.filename : "";
-    const photoPath = `/images/${photo}`;
 
-    if (!photo) {
+    if (!req.file) {
       return res.status(400).json({
         error: "Please upload a photo",
         success: false,
       });
     }
 
-    // Update the game station with the new photo
+     const imageUrl = await uploadImage(req.file, "gameStations/photos");
+
     const updatedGameStation = await GameStation.findByIdAndUpdate(
       gameStationId,
-      { $push: { images: photoPath } },
+      { $push: { images: imageUrl } },
       { new: true }
     );
 
@@ -295,7 +302,6 @@ const getGameStationImages = async (req, res, next) => {
   try {
     const gameStationId = req.params.id;
 
-    // Find the game station by ID
     const gameStation = await GameStation.findById(gameStationId);
 
     if (!gameStation) {
@@ -305,9 +311,8 @@ const getGameStationImages = async (req, res, next) => {
       });
     }
 
-    // Return the images associated with the game station
     return res.status(200).json({
-      images: gameStation.images, // Assuming 'images' is an array field in the GameStation model containing image paths
+      images: gameStation.images,
       success: true,
     });
   } catch (error) {
@@ -322,20 +327,19 @@ const getGameStationImages = async (req, res, next) => {
 const addVideoToGameStation = async (req, res) => {
   try {
     const gameStationId = req.params.id;
-    const videoFile = req.file;
 
-    if (!videoFile) {
+    if (!req.file) {
       return res.status(400).json({
         error: "Please upload a video file",
         success: false,
       });
     }
 
-    const videoPath = `/videos/${videoFile.filename}`;
+    const videoUrl = await uploadVideo(req.file, "gameStations/videos");
 
     const updatedGameStation = await GameStation.findByIdAndUpdate(
       gameStationId,
-      { $push: { videos: videoPath } },
+      { $push: { videos: videoUrl } },
       { new: true }
     );
 
@@ -358,7 +362,6 @@ const getGameStationVideos = async (req, res, next) => {
   try {
     const gameStationId = req.params.id;
 
-    // Find the game station by ID
     const gameStation = await GameStation.findById(gameStationId);
 
     if (!gameStation) {
@@ -368,7 +371,6 @@ const getGameStationVideos = async (req, res, next) => {
       });
     }
 
-    // Return the images associated with the game station
     return res.status(200).json({
       images: gameStation.videos,
       success: true,
@@ -433,7 +435,6 @@ const getGsById = async (req, res, next) => {
 
     res.status(200).json({ gameStation });
   } catch (error) {
-    // Handle errors
     console.error("Error fetching GameStation:", error);
     res.status(500).json({ message: "Internal server error" });
   }
@@ -692,7 +693,7 @@ const getGameByIdFromGs = async (req, res, next) => {
   try {
     const gameStation = await GameStation.findById(stationId).populate(
       "games.game"
-    ); // Populate the 'games' field
+    ); 
 
     if (!gameStation) {
       return res.status(404).json({ message: "GameStation not found" });
@@ -700,7 +701,7 @@ const getGameByIdFromGs = async (req, res, next) => {
 
     const game = gameStation.games.find(
       (g) => g.game._id.toString() === gameId
-    ); // Access the populated game object
+    );
 
     if (!game) {
       return res

@@ -8,6 +8,10 @@ const nodemailer = require("nodemailer");
 const jwt = require("jsonwebtoken");
 const sendEmail = require("../../Email/email");
 const ViewedGameStation = require("../../model/viewedGameStation");
+const uploadImage = require("../../utils/uploadImage");
+const deleteCloudinaryImage = require("../../utils/deleteCloudinaryImage");
+const generateAccessToken = require("../../utils/generateAccessToken");
+const generateRefreshToken = require("../../utils/generateRefreshToken");
 
 const generateOTP = () => {
   return Math.floor(100000 + Math.random() * 900000);
@@ -177,9 +181,25 @@ const loginUser = async (req, res, next) => {
         .json({ error: "Invalid credentials.", success: false });
     }
 
+    const payload = { id: user._id, role: "user" };
+
+    const accessToken = generateAccessToken(payload);
+    const refreshToken = generateRefreshToken(payload);
+
+    user.refreshToken = refreshToken;
+    await user.save();
+
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
     return res.status(200).json({
       message: "Login successful",
       success: true,
+      token: accessToken,
       user: userWithoutPassword,
     });
   } catch (error) {
@@ -222,7 +242,7 @@ const updateProfile = async (req, res) => {
         .status(404)
         .json({ message: "User not found", success: false });
     }
-    
+
     const updatedFields = {};
 
     if (req.body.userName) updatedFields.userName = req.body.userName;
@@ -230,9 +250,8 @@ const updateProfile = async (req, res) => {
     if (req.body.phone) updatedFields.phone = req.body.phone;
 
     if (req.file) {
-      const imgFileName = req.file.filename;
-      const imgPath = `/images/${imgFileName}`;
-      updatedFields.ProfileImg = imgPath;
+      const imageUrl = await uploadImage(req.file, "users");
+      updatedFields.ProfileImg = imageUrl;
     }
 
     Object.assign(user, updatedFields);
@@ -254,6 +273,16 @@ const deleteUser = async (req, res, next) => {
   const userId = req.params.id;
 
   try {
+    const userToDelete = await User.findById(userId);
+
+    if (userToDelete) {
+      return res
+        .status(404)
+        .json({ message: "User not found", success: false });
+    }
+
+    await deleteCloudinaryImage(userToDelete.ProfileImg);
+
     const user = await User.findByIdAndDelete(userId);
 
     if (!user) {
@@ -303,7 +332,6 @@ const forgotPassword = async (req, res, next) => {
     const sent = await sendOTP(email, otp);
 
     if (sent) {
-      // Save the OTP to the user document in the database
       user.resetPasswordOTP = otp;
       await user.save();
 
@@ -425,13 +453,16 @@ const uploadImg = async (req, res, next) => {
       return res.status(400).json({ message: "No file uploaded" });
     }
 
-    const imgFileName = req.file.filename;
-    const imgPath = `/images/${imgFileName}`;
+    let imageUrl = null;
+
+    if (req.file) {
+      imageUrl = await uploadImage(req.file, "users");
+    }
 
     const updatedUser = await User.findByIdAndUpdate(
       userId,
-      { ProfileImg: imgPath },
-      { new: true }
+      { ProfileImg: imageUrl },
+      { new: true },
     );
 
     if (!updatedUser) {
@@ -480,7 +511,6 @@ const contactUs = async (req, res, next) => {
       }
     });
   } catch (error) {
-    // Handle errors
     console.error("Error:", error);
     res.status(500).json({ message: "Internal server error" });
   }
@@ -517,16 +547,22 @@ const getAllBookingsByUserId = async (req, res, next) => {
   const userId = req.params.userId;
 
   try {
-    const bookings = await Booking.find({ userId }).populate("game").populate("gameStationId");
+    const bookings = await Booking.find({ userId })
+      .populate("game")
+      .populate("gameStationId");
 
     if (!bookings || bookings.length === 0) {
-      return res.status(404).json({ message: "No bookings found for this user", success: false });
+      return res
+        .status(404)
+        .json({ message: "No bookings found for this user", success: false });
     }
 
     return res.status(200).json({ bookings, success: true });
   } catch (error) {
     console.error("Error fetching bookings by userId:", error);
-    return res.status(500).json({ message: "Internal server error", success: false });
+    return res
+      .status(500)
+      .json({ message: "Internal server error", success: false });
   }
 };
 
@@ -534,9 +570,8 @@ const getGamesOfGs = async (req, res, next) => {
   const { stationId } = req.params;
 
   try {
-    const gameStation = await GameStation.findById(stationId).populate(
-      "games.game"
-    );
+    const gameStation =
+      await GameStation.findById(stationId).populate("games.game");
 
     if (!gameStation) {
       return res.status(404).json({ message: "GameStation not found" });
@@ -558,7 +593,6 @@ const getGamesOfGs = async (req, res, next) => {
   }
 };
 
-
 module.exports = {
   registerUser,
   loginUser,
@@ -575,5 +609,5 @@ module.exports = {
   contactUs,
   findGameStationById,
   getAllBookingsByUserId,
-  getGamesOfGs
+  getGamesOfGs,
 };

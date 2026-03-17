@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const citySchema = require('./citySchema'); // Import the City schema
+const citySchema = require('./citySchema');
 
 const stateSchema = new mongoose.Schema({
     stateName: {

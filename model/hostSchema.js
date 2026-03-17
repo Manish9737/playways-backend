@@ -20,11 +20,14 @@ const hostSchema = new mongoose.Schema(
       trim: true,
       required: true,
     },
+    refreshToken: {
+      type: String,
+    },
     resetPasswordOTP: {
       type: String,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 // password hasing

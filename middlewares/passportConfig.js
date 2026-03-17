@@ -60,7 +60,6 @@ passport.deserializeUser(async (id, done) => {
   }
 });
 
-// Middleware to generate JWT token
 function generateToken(host) {
   return jwt.sign({ id: host._id }, process.env.SECRET_KEY, {
     expiresIn: "1h",

@@ -8,6 +8,10 @@ const GameStation = require("../../model/gsSchema");
 const sendEmail = require("../../Email/email");
 const bcrypt = require("bcryptjs");
 const nodemailer = require("nodemailer");
+const uploadImage = require("../../utils/uploadImage");
+const deleteCloudinaryImage = require("../../utils/deleteCloudinaryImage");
+const generateAccessToken = require("../../utils/generateAccessToken");
+const generateRefreshToken = require("../../utils/generateRefreshToken");
 
 const registerAdmin = async (req, res) => {
   const { userName, email, password, isSuperUser } = req.body;
@@ -74,9 +78,25 @@ const loginAdmin = async (req, res, next) => {
         .json({ error: "Invalid credentials.", success: false });
     }
 
+    const payload = { id: admin._id, role: "admin" };
+
+    const accessToken = generateAccessToken(payload);
+    const refreshToken = generateRefreshToken(payload);
+
+    admin.refreshToken = refreshToken;
+    await admin.save();
+
+    res.cookie("adminRefreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
     return res.status(200).json({
       message: "Login successful",
       success: true,
+      token: accessToken,
       admin: admin.toObject(),
     });
   } catch (error) {
@@ -361,9 +381,8 @@ const updateUser = async (req, res) => {
     user.phone = req.body.phone || user.phone;
 
     if (req.file) {
-      const imgFileName = req.file.filename;
-      const imgPath = `/images/${imgFileName}`;
-      user.ProfileImg = imgPath;
+      const imageUrl = await uploadImage(req.file, "users");
+      user.ProfileImg = imageUrl;
     }
 
     const updatedUser = await user.save();
@@ -392,6 +411,16 @@ const deleteUser = async (req, res, next) => {
   const { id } = req.params;
 
   try {
+    const userTodelete = await User.findById(id);
+
+    if (!userTodelete) {
+      return res
+        .status(404)
+        .json({ message: "User not found", success: false });
+    }
+
+    await deleteCloudinaryImage(userTodelete.ProfileImg);
+
     const user = await User.findByIdAndDelete(id);
 
     if (!user) {
@@ -478,7 +507,7 @@ const updateQuote = async (req, res, next) => {
     const updatedQuote = await Qoute.findByIdAndUpdate(
       id,
       { name, quote },
-      { new: true }
+      { new: true },
     );
 
     if (!updatedQuote) {
@@ -546,11 +575,14 @@ const addGame = async (req, res, next) => {
 
   try {
     const { name } = req.body;
-    const image = req.file ? req.file.filename : "";
-    const imgPath = `/images/${image}`;
+    let imageUrl = null;
+
+    if (req.file) {
+      imageUrl = await uploadImage(req.file, "games");
+    }
 
     const newGame = new Game({
-      image: imgPath,
+      image: imageUrl,
       name,
     });
 
@@ -621,6 +653,16 @@ const deleteGame = async (req, res, next) => {
   const { adminId } = req.params;
   const { id } = req.params;
   try {
+    const game = await Game.findById(id);
+
+    if (!game) {
+      return res
+        .status(404)
+        .json({ message: "Game not found", success: false });
+    }
+
+    await deleteCloudinaryImage(game.image);
+
     await Game.findByIdAndDelete(id);
 
     const activity = new Activity({
@@ -797,9 +839,11 @@ const addGameStation = async (req, res, next) => {
   const { adminId } = req.params;
 
   try {
-    const gsLogoFilename = req.file ? req.file.filename : "";
-    console.log(gsLogoFilename);
-    imgPath = `/images/${gsLogoFilename}`;
+    let imageUrl = null;
+
+    if (req.file) {
+      imageUrl = await uploadImage(req.file, "gamestations");
+    }
 
     const {
       host,
@@ -836,7 +880,7 @@ const addGameStation = async (req, res, next) => {
       name,
       email,
       phone,
-      gsLogo: imgPath,
+      gsLogo: imageUrl,
       city,
       state,
       country,
@@ -886,9 +930,8 @@ const updateGameStation = async (req, res, next) => {
     }
 
     if (req.file) {
-      const imgFileName = req.file.filename;
-      const imgPath = `/images/${imgFileName}`;
-      gameStation.gsLogo = imgPath;
+      const imageUrl = await uploadImage(req.file, "gamestations");
+      gameStation.gsLogo = imageUrl;
     }
 
     Object.assign(gameStation, updateData);
@@ -929,6 +972,16 @@ const deleteGameStation = async (req, res, next) => {
     if (!admin || !admin.isSuperUser) {
       return res.status(401).json({ error: "Unauthorized", success: false });
     }
+
+    const gameStation = await GameStation.findById(id);
+
+    if (!gameStation) {
+      return res
+        .status(404)
+        .json({ message: "GameStation not found", success: false });
+    }
+
+    await deleteCloudinaryImage(gameStation.gsLogo);
 
     const deletedGameStation = await GameStation.findByIdAndDelete(id);
 

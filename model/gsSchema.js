@@ -59,11 +59,9 @@ const gsSchema = new mongoose.Schema(
     },
     openingTime: {
       type: String, 
-      // required: true,
     },
     closingTime: {
       type: String, 
-      // required: true,
     },
     closedDays: {
       type: [String], 

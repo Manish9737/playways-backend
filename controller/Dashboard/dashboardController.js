@@ -1,4 +1,3 @@
-// controllers/admin/dashboardController.js
 const Booking = require("../../model/bookingSchema");
 const User = require("../../model/userSchema");
 const GameStation = require("../../model/gsSchema");
@@ -132,7 +131,7 @@ const getDashboardStats = async (req, res) => {
             month: { $month: "$createdAt" },
           },
           bookings: { $sum: 1 },
-          revenue: { $sum: 0 }, // placeholder, join with payment if needed
+          revenue: { $sum: 0 },
         },
       },
       { $sort: { "_id.year": 1, "_id.month": 1 } },

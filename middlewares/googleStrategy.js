@@ -11,7 +11,6 @@ const setupGoogleStrategy = (passport) => {
     scope: ['profile', 'email'] // Define the required scope here
   },
   async (req, accessToken, refreshToken, profile, done) => {
-    // console.log(`Profile: ${JSON.stringify(profile)}`);
     try {
       const existingUser = await User.findOne({ googleId: profile.id });
 

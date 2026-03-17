@@ -12,10 +12,8 @@ const {
   resetPassword,
   fetchOTP,
 } = require("../../controller/host/hostController");
-// const setupGoogleStrategy = require("../../middlewares/googleStrategy");
 
 require("dotenv").config();
-// setupGoogleStrategy(passport);
 
 router.post("/register", registerHost); // register route
 

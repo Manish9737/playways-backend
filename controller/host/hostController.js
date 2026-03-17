@@ -4,6 +4,8 @@ const passport = require("passport");
 const { generateToken } = require("../../middlewares/passportConfig");
 const { generateOTP, sendOTP } = require("../users/userController");
 const sendEmail = require("../../Email/email");
+const generateAccessToken = require("../../utils/generateAccessToken");
+const generateRefreshToken = require("../../utils/generateRefreshToken");
 
 const registerHost = async (req, res, next) => {
   const { email, password, phone } = req.body;
@@ -87,9 +89,25 @@ const loginHost = async (req, res, next) => {
     const hostWithoutPassword = { ...host._doc };
     delete hostWithoutPassword.password;
 
+    const payload = { id: host._id, role: "host" };
+
+    const accessToken = generateAccessToken(payload);
+    const refreshToken = generateRefreshToken(host);
+
+    host.refreshToken = refreshToken;
+    await host.save();
+
+    res.cookie("hostRefreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
     return res.status(200).json({
       message: "Login successful",
       success: true,
+      token: accessToken,
       host: hostWithoutPassword,
     });
   } catch (error) {
@@ -114,7 +132,6 @@ const updateHost = async (req, res, next) => {
   const updateData = req.body;
 
   try {
-    // Find the host by ID
     const host = await Host.findById(hostId);
 
     if (!host) {
@@ -123,7 +140,6 @@ const updateHost = async (req, res, next) => {
         .json({ message: "Host not found", success: false });
     }
 
-    // Update the host's fields with the provided data
     Object.assign(host, updateData);
 
     await host.save();
@@ -143,7 +159,6 @@ const deleteHost = async (req, res, next) => {
   const hostId = req.params.id;
 
   try {
-    // Find the host by ID and delete it
     const host = await Host.findByIdAndDelete(hostId);
 
     if (!host) {
@@ -167,13 +182,11 @@ const logOut = async (req, res) => {
   try {
     req.logout((err) => {
       if (err) {
-        // Handle any error during logout
         res
           .status(500)
           .json({ message: "Error during logout", success: false });
         return;
       }
-      // Logout successful
       res
         .status(200)
         .json({ message: "Logged out successfully", success: true });
@@ -205,7 +218,6 @@ const forgotPassword = async (req, res, next) => {
     const sent = await sendOTP(email, otp);
 
     if (sent) {
-      // Save the OTP to the user document in the database
       host.resetPasswordOTP = otp;
       await host.save();
 

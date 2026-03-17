@@ -19,12 +19,33 @@ const adminSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    refreshToken: {
+      type: String,
+    },
     isSuperUser: {
       type: Boolean,
       default: false,
-    }
+    },
+    permissions: {
+      canAdd: {
+        type: Boolean,
+        default: false,
+      },
+      canEdit: {
+        type: Boolean,
+        default: false,
+      },
+      canDelete: {
+        type: Boolean,
+        default: false,
+      },
+      canView: {
+        type: Boolean,
+        default: true,
+      },
+    },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 // password hasing

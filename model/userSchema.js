@@ -7,7 +7,6 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
-      // unique: true,
     },
     email: {
       type: String,
@@ -30,6 +29,9 @@ const userSchema = new mongoose.Schema(
     IsPrimeUser: {
       type: Boolean,
       default: false,
+    },
+    refreshToken: {
+      type: String,
     },
     resetPasswordOTP: {
       type: String,

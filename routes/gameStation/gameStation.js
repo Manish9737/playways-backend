@@ -3,7 +3,7 @@ var router = express.Router();
 const Host = require("../../model/hostSchema");
 const GameStation = require("../../model/gsSchema");
 const upload = require("../../middlewares/singleFileUpload");
-// const uploadV = require("../../middlewares/singleFileUploadV");
+
 const {
   addGameStation,
   getGameStation,
@@ -27,11 +27,9 @@ const {
   getSlotsByStationIdGameIdDate,
   updateGameInGs,
   deleteGameFromGs,
-  // generateGameSlots,
 } = require("../../controller/gameStation/gameStationController");
 
 require("dotenv").config();
-// require("../../DB/conn");
 
 router.post("/addGameStation", upload("images").single("gsLogo"), addGameStation); // Add GameStations Route
 
@@ -80,6 +78,5 @@ router.get("/:stationId/:gameId/game", getGameByIdFromGs);  // get game data by 
 router.get("/:stationId/:gameId/:date/slots", getSlotsByStationIdGameIdDate);  // get game data by gsid, gameId
 
 
-module.exports = router;  
 
-// router.use("/images", express.static("public/images")); // route for get gsLogo
+module.exports = router;  

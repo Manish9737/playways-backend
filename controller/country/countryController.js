@@ -209,7 +209,7 @@ const getAllData = async (req, res) => {
     res.json({
       success: true,
       source: "db",
-      countries: data,
+      countries: countriesWithStatesAndCities,
     });
   } catch (error) {
     console.error(error);

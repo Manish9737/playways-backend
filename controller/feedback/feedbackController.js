@@ -28,7 +28,7 @@ const submitFeedback = async (req, res) => {
 
 const getAllFeedbacks = async (req, res) => {
   try {
-    const cachedData = await redis.get(FeedBack_CACHE_KEY);
+    const cachedData = await redis.get(FEEDBACK_ALL_KEY);
     if (cachedData) {
       return res.status(200).json({
         success: true,

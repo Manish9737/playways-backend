@@ -24,8 +24,6 @@ var paymentRouter = require("./routes/payment/payment");
 var bankDetailsRouter = require("./routes/bankDetails/bankDetails");
 var DashboardRouter = require("./routes/Dashboard/Dashboard");
 
-const Razorpay = require('razorpay');
-
 require("./DB/conn");
 require("./middlewares/passportConfig");
 
@@ -62,11 +60,12 @@ app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "jade");
 
 app.use(logger("dev"));
-app.use(express.json({ limit: "10mb" }));
+app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 app.use(cors(corsOptions));
+app.set("trust proxy", 1);  
 
 app.use("/images", express.static("public/images"));
 app.use("/", indexRouter);

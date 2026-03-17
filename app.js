@@ -1,4 +1,4 @@
-const http = require('http');
+const http = require("http");
 
 var createError = require("http-errors");
 var express = require("express");
@@ -17,7 +17,7 @@ var gsRouter = require("./routes/gameStation/gameStation");
 var adminRouter = require("./routes/admin/admin");
 var bookingsRouter = require("./routes/bookings/bookings");
 var gamesRouter = require("./routes/games/games");
-var feedbackRouter = require("./routes/feedback/feedback")
+var feedbackRouter = require("./routes/feedback/feedback");
 var blogRouter = require("./routes/blog/blog");
 var slotRouter = require("./routes/slots/slots");
 var paymentRouter = require("./routes/payment/payment");
@@ -37,20 +37,18 @@ app.use(
     secret: "cyberwolve",
     resave: false,
     saveUninitialized: false,
-  })
+  }),
 );
 
-
-
 const corsOptions = {
-  origin: [ 
+  origin: [
     "https://playways-app.web.app",
     "http://localhost:5173",
     "http://localhost:3000",
-    ], 
-  methods: "GET,POST,PUT,DELETE", 
+  ],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   credentials: true,
-  optionsSuccessStatus: 204, 
+  optionsSuccessStatus: 204,
 };
 
 // view engine setup
@@ -63,7 +61,8 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 app.use(cors(corsOptions));
-app.set("trust proxy", 1); 
+app.options("*", cors(corsOptions));
+app.set("trust proxy", 1);
 securityMiddleware(app);
 app.use(rateLimiter);
 app.use(compression());

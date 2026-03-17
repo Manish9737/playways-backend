@@ -36,7 +36,7 @@ var app = express();
 
 app.use(
   session({
-    secret: ["cyberwolve"],
+    secret: "cyberwolve",
     resave: false,
     saveUninitialized: false,
   })
@@ -51,7 +51,6 @@ const corsOptions = {
     "https://playways-app.web.app",
     "http://localhost:5173",
     "http://localhost:3000",
-    "*",
     ], 
   methods: "GET,POST,PUT,DELETE", 
   credentials: true,
@@ -89,12 +88,15 @@ app.use(function (req, res, next) {
   next(createError(404));
 });
 
-app.use(function (err, req, res, next) {
+app.use((err, req, res, next) => {
   res.locals.message = err.message;
   res.locals.error = req.app.get("env") === "development" ? err : {};
 
-  res.status(err.status || 500);
-  res.render("error");
+  res.status(err.status || 500).json({
+    message: err.message,
+    stack: process.env.NODE_ENV === "development" ? err.stack : undefined,
+  });
+  // res.render("error");
 });
 
 module.exports = app;

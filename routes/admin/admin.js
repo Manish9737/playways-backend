@@ -83,7 +83,7 @@ router.delete("/quotes/:adminId/delete/:id", deleteQuote);
 
 router.get("/games", allGames);
 router.post("/games/:adminId/add",upload("images").single("image"), addGame);
-router.put("/games/:adminId/update/:id", updateGame);
+router.put("/games/:adminId/update/:id",upload("images").single("image"), updateGame);
 router.delete("/games/:adminId/delete/:id", deleteGame);
 
 router.get("/hosts", allHosts);

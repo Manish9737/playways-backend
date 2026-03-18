@@ -275,7 +275,7 @@ const deleteUser = async (req, res, next) => {
   try {
     const userToDelete = await User.findById(userId);
 
-    if (userToDelete) {
+    if (!userToDelete) {
       return res
         .status(404)
         .json({ message: "User not found", success: false });
@@ -469,7 +469,7 @@ const uploadImg = async (req, res, next) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    res.status(200).json({ imageUrl: imgPath });
+    res.status(200).json({ imageUrl: imageUrl });
   } catch (error) {
     console.error("Error uploading image:", error);
     res.status(500).json({ message: "Error uploading image" });

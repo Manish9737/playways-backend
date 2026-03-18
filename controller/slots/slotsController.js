@@ -197,9 +197,7 @@ const deleteSlot = async (req, res, next) => {
       return res.status(404).json({ message: "Slot not found" });
     }
 
-    Object.keys(updateData).forEach((key) => {
-      slot.slots[foundSlotIndex][key] = updateData[key];
-    });
+    slot.slots.splice(foundSlotIndex, 1);
 
     await slot.save();
 

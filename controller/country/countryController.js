@@ -204,7 +204,7 @@ const getAllData = async (req, res) => {
       return res.status(404).json({ message: "No data found", success: false });
     }
 
-    await redis.set(ALL_DATA_KEY, JSON.stringify(data), { ex: 3600 });
+    await redis.set(ALL_DATA_KEY, JSON.stringify(countriesWithStatesAndCities), { ex: 3600 });
 
     res.json({
       success: true,

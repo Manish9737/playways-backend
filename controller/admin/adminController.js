@@ -622,8 +622,12 @@ const updateGame = async (req, res, next) => {
     }
 
     if (req.file) {
-      const imageUrl = await uploadImage(req.file, "games")
-      updateData.image = path;
+      if (game.image) {
+        await deleteCloudinaryImage(game.image);
+      }
+
+      const imageUrl = await uploadImage(req.file, "games");
+      updateData.image = imageUrl;
     }
 
     Object.assign(game, updateData);

@@ -1,6 +1,9 @@
 const uploadImage = require("../../utils/uploadImage");
 const Game = require("../../model/gameSchema");
 const deleteCloudinaryImage = require("../../utils/deleteCloudinaryImage");
+const redis = require("../../config/redis")
+
+const GAMES_CACHE_KEY = "games:all";
 
 const addGame = async (req, res, next) => {
   try {

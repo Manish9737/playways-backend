@@ -14,7 +14,7 @@ const uploadImage = async (file, folder) => {
     return result.secure_url;
 
   } catch (error) {
-    throw new Error("Image upload failed");
+    throw new Error("Image upload failed:", error.message);
   }
 };
 

@@ -47,9 +47,12 @@ const getAllBlogs = async (req, res) => {
       });
     }
 
-    const blogs = await Blog.find()
+    const blogs = await Blog.find().lean()
+
+    await redis.set(BLOGS_ALL_KEY, JSON.stringify(blogs), { ex: 600 });
 
     res.json({
+      success: true,
       source: "db",
       blogs,
     });

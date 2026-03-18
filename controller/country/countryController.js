@@ -40,10 +40,7 @@ const addCountry = async (req, res, next) => {
     savedCountry.states = createdStates;
     await savedCountry.save();
 
-    await redis.del(COUNTRIES_KEY);
-    await redis.del(STATES_KEY);
-    await redis.del(CITIES_KEY);
-    await redis.del(ALL_DATA_KEY);
+    await redis.del([COUNTRIES_KEY, STATES_KEY, CITIES_KEY, ALL_DATA_KEY]);
 
     return res
       .status(200)
@@ -74,6 +71,7 @@ const addCities = async (req, res) => {
 
       if (!state) {
         state = new State({ stateName, country: country._id });
+        await state.save();
       }
 
       for (const cityData of cities) {
@@ -84,6 +82,7 @@ const addCities = async (req, res) => {
         if (!existingCity) {
           const city = new City({ cityName, state: state._id });
           await city.save();
+          if (!state.cities) state.cities = [];
           state.cities.push(city._id);
         }
       }
@@ -91,10 +90,7 @@ const addCities = async (req, res) => {
       await state.save();
     }
 
-    await redis.del(COUNTRIES_KEY);
-    await redis.del(STATES_KEY);
-    await redis.del(CITIES_KEY);
-    await redis.del(ALL_DATA_KEY);
+    await redis.del([COUNTRIES_KEY, STATES_KEY, CITIES_KEY, ALL_DATA_KEY]);
 
     return res
       .status(200)
@@ -118,7 +114,7 @@ const getCountries = async (req, res, next) => {
         countries: JSON.parse(cached),
       });
     }
-    const countries = await Country.find({}, " -states -__v").lean();
+    const countries = await Country.find({}, "-states -__v").lean();
     await redis.set(COUNTRIES_KEY, JSON.stringify(countries), { ex: 3600 });
 
     res.status(200).json({
@@ -144,7 +140,7 @@ const getStates = async (req, res, next) => {
       });
     }
 
-    const states = await State.find({}, " -cities -__v").lean();
+    const states = await State.find({}, "-cities -__v").lean();
 
     await redis.set(STATES_KEY, JSON.stringify(states), { ex: 3600 });
 
@@ -167,7 +163,7 @@ const getCities = async (req, res, next) => {
       });
     }
 
-    const cities = await City.find({}, "  -__v").lean();
+    const cities = await City.find({}, "-__v").lean();
 
     await redis.set(CITIES_KEY, JSON.stringify(cities), { ex: 3600 });
 
@@ -190,21 +186,24 @@ const getAllData = async (req, res) => {
       });
     }
 
-    const countriesWithStatesAndCities = await Country.find(
-      {},
-      "-_id -__v ",
-    ).populate({
-      path: "states",
-      populate: {
-        path: "cities",
-      },
-    });
+    const countriesWithStatesAndCities = await Country.find({}, "-_id -__v ")
+      .populate({
+        path: "states",
+        populate: {
+          path: "cities",
+        },
+      })
+      .lean();
 
-    if (!countriesWithStatesAndCities) {
+    if (!countriesWithStatesAndCities.length) {
       return res.status(404).json({ message: "No data found", success: false });
     }
 
-    await redis.set(ALL_DATA_KEY, JSON.stringify(countriesWithStatesAndCities), { ex: 3600 });
+    await redis.set(
+      ALL_DATA_KEY,
+      JSON.stringify(countriesWithStatesAndCities),
+      { ex: 3600 },
+    );
 
     res.json({
       success: true,

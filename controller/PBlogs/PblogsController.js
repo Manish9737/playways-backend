@@ -3,6 +3,7 @@ const Blog = require("../../model/blogSchema");
 const deleteCloudinaryImage = require("../../utils/deleteCloudinaryImage");
 const uploadImage = require("../../utils/uploadImage");
 const redis = require("../../config/redis")
+const {parseJSON} = require("../../utils/helpers")
 
 const BLOGS_ALL_KEY = "blogs:all"
 const BLOG_BY_ID_KEY = (id) => `blogs:${id}`;
@@ -38,12 +39,12 @@ const createBlog = async (req, res) => {
 
 const getAllBlogs = async (req, res) => {
   try {
-    const cached = await redis.get(BLOGS_ALL_KEY);
+ const cached = await redis.get(BLOGS_ALL_KEY);
 
     if (cached) {
       return res.json({
         source: "cache",
-        blogs: JSON.parse(cached),
+        blogs: typeof cached === "string" ? JSON.parse(cached) : cached,
       });
     }
 
@@ -70,7 +71,7 @@ const getBlogById = async (req, res) => {
     if (cached) {
       return res.json({
         source: "cache",
-        blog: JSON.parse(cached),
+        blog: parseJSON(cached),
       });
     }
 

@@ -2,6 +2,10 @@ const Activity = require("../../model/activitySchema");
 const Blog = require("../../model/blogSchema");
 const deleteCloudinaryImage = require("../../utils/deleteCloudinaryImage");
 const uploadImage = require("../../utils/uploadImage");
+const redis = require("../../config/redis")
+
+const BLOGS_ALL_KEY = "blogs:all"
+const BLOG_BY_ID_KEY = (id) => `blogs:${id}`;
 
 const createBlog = async (req, res) => {
   const { adminId } = req.params;
@@ -43,15 +47,14 @@ const getAllBlogs = async (req, res) => {
       });
     }
 
-    const blogs = await Blog.find().lean();
-
-    await redis.set(BLOGS_ALL_KEY, JSON.stringify(blogs), { ex: 300 });
+    const blogs = await Blog.find()
 
     res.json({
       source: "db",
       blogs,
     });
   } catch (error) {
+    console.log(error)
     res.status(500).json({ error: "Internal server error" });
   }
 };

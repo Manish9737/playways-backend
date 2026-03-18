@@ -118,7 +118,7 @@ const getCountries = async (req, res, next) => {
         countries: JSON.parse(cached),
       });
     }
-    const countries = await Country.find({}, " -states -__v");
+    const countries = await Country.find({}, " -states -__v").lean();
     await redis.set(COUNTRIES_KEY, JSON.stringify(countries), { ex: 3600 });
 
     res.status(200).json({
@@ -144,7 +144,7 @@ const getStates = async (req, res, next) => {
       });
     }
 
-    const states = await State.find({}, " -cities -__v");
+    const states = await State.find({}, " -cities -__v").lean();
 
     await redis.set(STATES_KEY, JSON.stringify(states), { ex: 3600 });
 
@@ -167,7 +167,7 @@ const getCities = async (req, res, next) => {
       });
     }
 
-    const cities = await City.find({}, "  -__v");
+    const cities = await City.find({}, "  -__v").lean();
 
     await redis.set(CITIES_KEY, JSON.stringify(cities), { ex: 3600 });
 

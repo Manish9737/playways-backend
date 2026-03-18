@@ -45,7 +45,7 @@ const getallQuotes = async (req, res, next) => {
       });
     }
 
-    const quotes = await Qoute.find();
+    const quotes = await Qoute.find().lean();
 
     await redis.set(QUOTES_KEY, JSON.stringify(quotes), { ex: 300 });
 

@@ -57,7 +57,8 @@ const allBookings = async (req, res, next) => {
     const bookings = await Booking.find()
       .populate("userId")
       .populate("gameStationId")
-      .populate("game");
+      .populate("game")
+      .lean();
 
     await redis.set(BOOKINGS_CACHE_KEY, JSON.stringify(bookings), {
       ex: 60,

@@ -36,7 +36,7 @@ const getAllFeedbacks = async (req, res) => {
         feedbacks: JSON.parse(cachedData),
       });
     }
-    const feedbacks = await Feedback.find();
+    const feedbacks = await Feedback.find().lean();
     await redis.set(FEEDBACK_ALL_KEY, JSON.stringify(feedbacks), {
       ex: 60,
     });

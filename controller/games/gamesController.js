@@ -51,7 +51,7 @@ const allGames = async (req, res, next) => {
       });
     }
 
-    const games = await Game.find();
+    const games = await Game.find().lean();
 
     await redis.set(GAMES_CACHE_KEY, JSON.stringify(games), {
       ex: 60,

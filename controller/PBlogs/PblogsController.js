@@ -47,7 +47,7 @@ const getAllBlogs = async (req, res) => {
       });
     }
 
-    const blogs = await Blog.find();
+    const blogs = await Blog.find().lean();
 
     await redis.set(BLOGS_ALL_KEY, JSON.stringify(blogs), { ex: 300 });
 
@@ -72,7 +72,7 @@ const getBlogById = async (req, res) => {
       });
     }
 
-    const blog = await Blog.findById(id);
+    const blog = await Blog.findById(id).lean();
     if (!blog) {
       return res.status(404).json({ error: "Blog not found" });
     }

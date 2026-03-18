@@ -54,6 +54,7 @@ const getAllBlogs = async (req, res) => {
       blogs,
     });
   } catch (error) {
+    console.log(error)
     res.status(500).json({ error: "Internal server error" });
   }
 };

@@ -622,9 +622,7 @@ const updateGame = async (req, res, next) => {
     }
 
     if (req.file) {
-      const filePath = req.file.filename;
-      console.log(filePath);
-      const path = `/images/${filePath}`;
+      const imageUrl = uploadImage(req.file, "games")
       updateData.image = path;
     }
 

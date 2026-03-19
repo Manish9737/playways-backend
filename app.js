@@ -44,9 +44,9 @@ const corsOptions = {
     "https://playways-app.web.app",
     "http://localhost:5173",
     "http://localhost:3000",
-    "*",
     ], 
-  methods: "GET,POST,PUT,DELETE", 
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], 
+  allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
   optionsSuccessStatus: 204, 
 };

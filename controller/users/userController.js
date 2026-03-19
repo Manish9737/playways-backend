@@ -199,7 +199,7 @@ const loginUser = async (req, res, next) => {
     return res.status(200).json({
       message: "Login successful",
       success: true,
-      token: accessToken,
+      accessToken,
       user: userWithoutPassword,
     });
   } catch (error) {

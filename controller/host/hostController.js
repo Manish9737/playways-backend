@@ -92,7 +92,7 @@ const loginHost = async (req, res, next) => {
     const payload = { id: host._id, role: "host" };
 
     const accessToken = generateAccessToken(payload);
-    const refreshToken = generateRefreshToken(host);
+    const refreshToken = generateRefreshToken(payload);
 
     host.refreshToken = refreshToken;
     await host.save();
@@ -107,7 +107,7 @@ const loginHost = async (req, res, next) => {
     return res.status(200).json({
       message: "Login successful",
       success: true,
-      token: accessToken,
+      accessToken,
       host: hostWithoutPassword,
     });
   } catch (error) {

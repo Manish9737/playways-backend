@@ -52,9 +52,15 @@ const { checkSuperUser } = require("../../middlewares/adminAuth");
 const upload = require("../../middlewares/singleFileUpload");
 const { getAllBlogs, createBlog, updateBlog, deleteBlog } = require("../../controller/PBlogs/PblogsController");
 const { updateBookingStatus } = require("../../controller/bookings/bookingsController");
+const { refreshAdminToken, logoutAdmin } = require("../../controller/auth/refreshController");
+const { authenticateAdmin } = require("../../middlewares/Auth");
 
 router.post("/register", registerAdmin); // Register new Admin
 router.post("/login", loginAdmin); // Login Admin
+router.post("/refresh-token", refreshAdminToken);
+router.post("/logout", logoutAdmin);
+
+router.use(authenticateAdmin);
 router.get("/admins", allAdmins); // all Admin
 router.post("/:adminId/addAdmin", addAdmin); // Add new Admin
 router.post("/:adminId/changePassword", changePassword); // change Admin pass

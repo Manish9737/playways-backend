@@ -23,21 +23,9 @@ var paymentRouter = require("./routes/payment/payment");
 var bankDetailsRouter = require("./routes/bankDetails/bankDetails");
 var DashboardRouter = require("./routes/Dashboard/Dashboard");
 
-const Razorpay = require('razorpay');
-
 require("./DB/conn");
-
-require("./middlewares/passportConfig");
-
+require("./middlewares/passportConfig")
 var app = express();
-
-app.use(
-  session({
-    secret: ["cyberwolve"],
-    saveUninitialized: false,
-  })
-);
-
 
 const corsOptions = {
   origin: [ 
@@ -50,6 +38,16 @@ const corsOptions = {
   credentials: true,
   optionsSuccessStatus: 204, 
 };
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
+
+
+app.use(
+  session({
+    secret: ["cyberwolve"],
+    saveUninitialized: false,
+  })
+);
 
 // view engine setup
 app.set("views", path.join(__dirname, "views"));
@@ -60,7 +58,6 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
-app.use(cors(corsOptions));
 
 app.use("/images", express.static("public/images"));
 app.use("/", indexRouter);

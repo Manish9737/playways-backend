@@ -1,6 +1,7 @@
 const uploadImage = require("../../utils/uploadImage");
 const Game = require("../../model/gameSchema");
 const deleteCloudinaryImage = require("../../utils/deleteCloudinaryImage");
+const {parseJSON} = require("../../utils/helpers")
 const redis = require("../../config/redis")
 
 const GAMES_CACHE_KEY = "games:all";
@@ -47,7 +48,7 @@ const allGames = async (req, res, next) => {
       return res.status(200).json({
         success: true,
         source: "cache",
-        games: JSON.parse(cachedData),
+        games: parseJSON(cachedData),
       });
     }
 

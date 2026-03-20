@@ -3,6 +3,7 @@ const Slot = require("../../model/slotsSchema");
 const GameStation = require("../../model/gsSchema");
 const Game = require("../../model/gameSchema");
 const Activity = require("../../model/activitySchema");
+const {parseJSON} = require("../../utils/helpers")
 const redis = require("../../config/redis");
 
 const BOOKINGS_CACHE_KEY = "bookings:all";
@@ -50,7 +51,7 @@ const allBookings = async (req, res, next) => {
       return res.status(200).json({
         success: true,
         source: "cache",
-        bookings: JSON.parse(cachedData),
+        bookings: parseJSON(cachedData),
       });
     }
 

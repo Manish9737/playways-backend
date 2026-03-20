@@ -2,7 +2,9 @@ const jwt = require("jsonwebtoken");
 
 const verifyToken = (role, cookieName) => (req, res, next) => {
   const authHeader = req.headers["authorization"];
+  // console.log(authHeader, "<=  Auth Header")
   const token = authHeader && authHeader.split(" ")[1]; 
+  console.log(token, "<=  Token")
   if (!token) {
     return res.status(401).json({
       success: false,
@@ -11,7 +13,9 @@ const verifyToken = (role, cookieName) => (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
+
+    console.log(decoded)
 
     if (decoded.role !== role) {
       return res.status(403).json({

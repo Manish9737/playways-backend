@@ -34,8 +34,12 @@ services:
     sync: false
   - key: DATABASE
     sync: false
+  - key: CLIENT_URL
+    value: https://playways-app.web.app
+  - key: NODE_ENV
+    value: production
   region: oregon
   buildCommand: npm install
   startCommand: npm start
-  autoDeployTrigger: "off"
+  autoDeployTrigger: commit
   rootDir: .

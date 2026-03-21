@@ -160,7 +160,7 @@ const sendEmailbyAdmin = async (req, res, next) => {
       from: process.env.Email,
       to,
       subject,
-      html
+      html,
     };
 
     await transporter.sendMail(mailOptions);
@@ -203,7 +203,7 @@ const changePassword = async (req, res, next) => {
 
 const addAdmin = async (req, res, next) => {
   const { adminId } = req.params;
-  const { userName, email, password, isSuperUser } = req.body;
+  const { userName, email, password, isSuperUser, permissions } = req.body;
 
   try {
     const superUser = await Admin.findById(adminId);
@@ -223,6 +223,12 @@ const addAdmin = async (req, res, next) => {
       email,
       password,
       isSuperUser,
+      permissions: {
+        canAdd: permissions?.canAdd ?? false,
+        canEdit: permissions?.canEdit ?? false,
+        canDelete: permissions?.canDelete ?? false,
+        canView: permissions?.canView ?? true,
+      },
     });
 
     await newAdmin.save();

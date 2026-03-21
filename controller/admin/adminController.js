@@ -12,6 +12,7 @@ const uploadImage = require("../../utils/uploadImage");
 const deleteCloudinaryImage = require("../../utils/deleteCloudinaryImage");
 const generateAccessToken = require("../../utils/generateAccessToken");
 const generateRefreshToken = require("../../utils/generateRefreshToken");
+const { adminEmailTemplate } = require("../../Email/templates/templates");
 
 const registerAdmin = async (req, res) => {
   const { userName, email, password, isSuperUser } = req.body;
@@ -154,11 +155,12 @@ const sendEmailbyAdmin = async (req, res, next) => {
       },
     });
 
+    const html = adminEmailTemplate({ subject, body: content });
     const mailOptions = {
       from: process.env.Email,
       to,
       subject,
-      html: content,
+      html
     };
 
     await transporter.sendMail(mailOptions);

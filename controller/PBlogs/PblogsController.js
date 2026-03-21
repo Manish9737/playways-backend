@@ -44,7 +44,7 @@ const getAllBlogs = async (req, res) => {
     if (cached) {
       return res.json({
         source: "cache",
-        blogs: typeof cached === "string" ? JSON.parse(cached) : cached,
+        blogs: parseJSON(cached),
       });
     }
 

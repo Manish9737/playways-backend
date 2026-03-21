@@ -60,6 +60,11 @@ router.post("/login", loginAdmin); // Login Admin
 router.post("/refresh-token", refreshAdminToken);
 router.post("/logout", logoutAdmin);
 
+router.get("/getAllCountry", getAllData);
+router.get("/getCountry", getCountries);
+router.get("/getStates", getStates);
+router.get("/getCities", getCities);
+
 router.use(authenticateAdmin);
 router.get("/admins", allAdmins); // all Admin
 router.post("/:adminId/addAdmin", addAdmin); // Add new Admin
@@ -72,10 +77,7 @@ router.delete("/:adminId/delete/:id", checkSuperUser, deleteAdmin);
 router.post("/addCountry", addCountry);
 router.post("/addCities", addCities);
 router.post("/updateCountry/:id", updateCountry);
-router.get("/getAllCountry", getAllData);
-router.get("/getCountry", getCountries);
-router.get("/getStates", getStates);
-router.get("/getCities", getCities);
+
 
 router.get("/users", allUsers);
 router.post("/users/:adminId/add", checkSuperUser, AddUser);

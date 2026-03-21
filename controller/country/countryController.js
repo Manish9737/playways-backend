@@ -2,6 +2,7 @@ const Country = require("../../model/countrySchema");
 const State = require("../../model/stateSchema");
 const City = require("../../model/citySchema");
 const redis = require("../../config/redis");
+const {parseJSON} = require("../../utils/helpers")
 
 const COUNTRIES_KEY = "geo:countries";
 const STATES_KEY = "geo:states";
@@ -111,7 +112,7 @@ const getCountries = async (req, res, next) => {
       return res.status(200).json({
         success: true,
         source: "cache",
-        countries: JSON.parse(cached),
+        countries: parseJSON(cached),
       });
     }
     const countries = await Country.find({}, "-states -__v").lean();
@@ -136,7 +137,7 @@ const getStates = async (req, res, next) => {
       return res.json({
         success: true,
         source: "cache",
-        states: JSON.parse(cached),
+        states: parseJSON(cached),
       });
     }
 
@@ -159,7 +160,7 @@ const getCities = async (req, res, next) => {
       return res.json({
         success: true,
         source: "cache",
-        cities: JSON.parse(cached),
+        cities: parseJSON(cached),
       });
     }
 
@@ -182,7 +183,7 @@ const getAllData = async (req, res) => {
       return res.json({
         success: true,
         source: "cache",
-        countries: JSON.parse(cached),
+        countries: parseJSON(cached),
       });
     }
 

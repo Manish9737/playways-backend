@@ -1,5 +1,6 @@
 const Feedback = require("../../model/feedbackSchema");
 const redis = require("../../config/redis");
+const {parseJSON} = require("../../utils/helpers")
 
 const FEEDBACK_ALL_KEY = "feedbacks:all";
 
@@ -33,7 +34,7 @@ const getAllFeedbacks = async (req, res) => {
       return res.status(200).json({
         success: true,
         source: "cache",
-        feedbacks: JSON.parse(cachedData),
+        feedbacks: parseJSON(cachedData),
       });
     }
     const feedbacks = await Feedback.find().lean();

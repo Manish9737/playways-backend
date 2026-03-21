@@ -1,11 +1,15 @@
 const Host = require("../../model/hostSchema");
 const bcrypt = require("bcryptjs");
 const passport = require("passport");
-const { generateToken } = require("../../middlewares/passportConfig");
-const { generateOTP, sendOTP } = require("../users/userController");
+const { generateOTP } = require("../users/userController");
 const sendEmail = require("../../Email/email");
 const generateAccessToken = require("../../utils/generateAccessToken");
 const generateRefreshToken = require("../../utils/generateRefreshToken");
+const {
+  welcomeTemplate,
+  otpTemplate,
+  passwordResetSuccessTemplate,
+} = require("../../Email/templates/templates");
 
 const registerHost = async (req, res, next) => {
   const { email, password, phone } = req.body;
@@ -30,18 +34,11 @@ const registerHost = async (req, res, next) => {
 
       const savedHost = await Hosts.save();
 
-      const subject = "Welcome to PlayWays Family.";
-      const content = `
-        <h2>Dear ${email},</h2>
-        <p>Thank you for registering with us!</p>
-        <p>Your account has been successfully created.</p>
-        <p>Best regards,</p>
-        <p>PlayWays Team</p>
-        <hr>
-        <p>For Support, <a href="http://localhost:3000/contact">Click here</a></p>
-      `;
-
-      await sendEmail(email, subject, content);
+      await sendEmail(
+        email,
+        "Welcome to PlayWays Family 🎮",
+        welcomeTemplate({ name: email, role: "host" }),
+      );
 
       console.log("Host is Registered");
       return res.status(200).json({
@@ -215,7 +212,11 @@ const forgotPassword = async (req, res, next) => {
     }
 
     const otp = generateOTP();
-    const sent = await sendOTP(email, otp);
+    const sent = await sendEmail(
+      email,
+      "Your OTP for Password Reset",
+      otpTemplate({ otp, purpose: "Password Reset" }),
+    );
 
     if (sent) {
       host.resetPasswordOTP = otp;
@@ -231,6 +232,7 @@ const forgotPassword = async (req, res, next) => {
     }
   } catch (error) {
     console.error("Error in forgot-password:", error);
+    console.log(error)
     return res
       .status(500)
       .json({ message: "Internal server error", success: false });
@@ -255,45 +257,11 @@ const resetPassword = async (req, res, next) => {
     host.resetPasswordOTP = null;
     await host.save();
 
-    const subject = "Password Reset Successful";
-    const content = `
-      <html>
-        <head>
-          <style>
-            /* Define CSS styles for email */
-            body {
-              font-family: Arial, sans-serif;
-              background-color: #fff;
-              padding: 20px;
-            }
-            .container {
-              max-width: 600px;
-              margin: 0 auto;
-              background-color: #fff;
-              padding: 20px;
-              border-radius: 8px;
-              box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            }
-            h1 {
-              color: #333;
-            }
-            p {
-              color: #666;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <h1>Password Reset Successful</h1>
-            <p>Your password has been successfully reset.</p>
-            <p>You can now use your new password to log in to your account.</p>
-            <p>If you did not request this password reset, please contact us immediately.</p>
-          </div>
-        </body>
-      </html>
-    `;
-
-    await sendEmail(email, subject, content);
+    await sendEmail(
+      email,
+      "Password Reset Successful",
+      passwordResetSuccessTemplate({ name: email, redirectUrl: `${process.env.CLIENT_URL}/host` }),
+    );
 
     res
       .status(200)

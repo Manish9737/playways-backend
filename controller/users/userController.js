@@ -5,13 +5,17 @@ const Booking = require("../../model/bookingSchema");
 const Game = require("../../model/gameSchema");
 const bcrypt = require("bcryptjs");
 const nodemailer = require("nodemailer");
-const jwt = require("jsonwebtoken");
 const sendEmail = require("../../Email/email");
 const ViewedGameStation = require("../../model/viewedGameStation");
 const uploadImage = require("../../utils/uploadImage");
 const deleteCloudinaryImage = require("../../utils/deleteCloudinaryImage");
 const generateAccessToken = require("../../utils/generateAccessToken");
 const generateRefreshToken = require("../../utils/generateRefreshToken");
+const {
+  welcomeTemplate,
+  otpTemplate,
+  passwordResetSuccessTemplate,
+} = require("../../Email/templates/templates");
 
 const generateOTP = () => {
   return Math.floor(100000 + Math.random() * 900000);
@@ -117,18 +121,11 @@ const registerUser = async (req, res, next) => {
 
       const savedUser = await users.save();
 
-      const subject = "Welcome to PlayWays Family.";
-      const content = `
-        <h2>Dear ${userName},</h2>
-        <p>Thank you for registering with us!</p>
-        <p>Your account has been successfully created.</p>
-        <p>Best regards,</p>
-        <p>PlayWays Team</p>
-        <hr>
-        <p>For Support, <a href="http://localhost:3000/contact">Click here</a></p>
-      `;
-
-      await sendEmail(email, subject, content);
+      await sendEmail(
+        email,
+        "Welcome to PlayWays Family",
+        welcomeTemplate({ name: userName, role: "user" }),
+      );
 
       console.log("User is Registered");
       return res.status(200).json({
@@ -329,7 +326,11 @@ const forgotPassword = async (req, res, next) => {
     }
 
     const otp = generateOTP();
-    const sent = await sendOTP(email, otp);
+    const sent = await sendEmail(
+      email,
+      "Your OTP for Password Reset",
+      otpTemplate({ otp, purpose: "Password Reset" }),
+    );
 
     if (sent) {
       user.resetPasswordOTP = otp;
@@ -369,45 +370,14 @@ const resetPassword = async (req, res, next) => {
     user.resetPasswordOTP = null;
     await user.save();
 
-    const subject = "Password Reset Successful";
-    const content = `
-      <html>
-        <head>
-          <style>
-            /* Define CSS styles for email */
-            body {
-              font-family: Arial, sans-serif;
-              background-color: #fff;
-              padding: 20px;
-            }
-            .container {
-              max-width: 600px;
-              margin: 0 auto;
-              background-color: #fff;
-              padding: 20px;
-              border-radius: 8px;
-              box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            }
-            h1 {
-              color: #333;
-            }
-            p {
-              color: #666;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <h1>Password Reset Successful</h1>
-            <p>Your password has been successfully reset.</p>
-            <p>You can now use your new password to log in to your account.</p>
-            <p>If you did not request this password reset, please contact us immediately.</p>
-          </div>
-        </body>
-      </html>
-    `;
-
-    await sendEmail(email, subject, content);
+    await sendEmail(
+      email,
+      "Password Reset Successful",
+      passwordResetSuccessTemplate({
+        name: user.userName,
+        redirectUrl: `${process.env.CLIENT_URL}`,
+      }),
+    );
 
     res
       .status(200)
@@ -423,6 +393,7 @@ const resetPassword = async (req, res, next) => {
 const fetchOTP = async (req, res) => {
   try {
     const { email, OTP } = req.body;
+    console.log(`email: ${email}`, `otp: ${OTP}`)
 
     const user = await User.findOne({ email });
 

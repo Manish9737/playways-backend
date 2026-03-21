@@ -1,5 +1,6 @@
 const Qoute = require("../../model/quoteSchema");
 const redis = require("../../config/redis");
+const {parseJSON} = require("../../utils/helpers")
 
 const QUOTES_KEY = "quotes:all";
 
@@ -41,7 +42,7 @@ const getallQuotes = async (req, res, next) => {
     if (cached) {
       return res.status(200).json({
         source: "cache",
-        quotes: JSON.parse(cached),
+        quotes: parseJSON(cached),
       });
     }
 

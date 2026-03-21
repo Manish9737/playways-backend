@@ -25,7 +25,7 @@ const addBooking = async (req, res, next) => {
       paymentStatus: "successfull",
     });
 
-    await newBooking.save();
+  await newBooking.save();
 
     await redis.del(BOOKINGS_CACHE_KEY);
 
@@ -83,7 +83,7 @@ const getAllBookings = async (req, res) => {
       return res.json({
         success: true,
         source: "cache",
-        ...JSON.parse(cached),
+        ...parseJSON(cached),
       });
     }
 
@@ -170,7 +170,7 @@ const getBookingById = async (req, res) => {
       return res.json({
         success: true,
         source: "cache",
-        data: JSON.parse(cached),
+        data: parseJSON(cached),
       });
     }
 

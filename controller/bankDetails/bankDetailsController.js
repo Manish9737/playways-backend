@@ -1,6 +1,7 @@
 const BankDetails = require("../../model/bankDetailsSchema");
 const GameStation = require("../../model/gsSchema");
 const redis = require("../../config/redis");
+const {parseJSON} = require("../../utils/helpers")
 
 const BANK_DETAILS_CACHE_KEY = "bankDetails:all";
 
@@ -47,7 +48,7 @@ const getBankDetails = async (req, res) => {
       return res.status(200).json({
         success: true,
         source: "cache",
-        bankDetails: JSON.parse(cachedData),
+        bankDetails: parseJSON(cachedData),
       });
     }
 

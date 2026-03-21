@@ -4,6 +4,7 @@ const Game = require("../../model/gameSchema");
 const Booking = require("../../model/bookingSchema");
 const Slot = require("../../model/slotsSchema");
 const uploadImage = require("../../utils/uploadImage");
+const uploadVideo = require("../../utils/uploadVideo")
 
 const addGameStation = async (req, res, next) => {
   try {

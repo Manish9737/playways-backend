@@ -1,0 +1,41 @@
+# Exported from Render on 2026-03-21T07:39:09Z
+version: "1"
+services:
+- type: web
+  name: playways-backend
+  runtime: node
+  repo: https://github.com/Manish9737/playways-backend
+  branch: master
+  plan: free
+  envVars:
+  - key: REDIS_REST_TOKEN
+    sync: false
+  - key: REDIS_REST_URL
+    sync: false
+  - key: CLOUDINARY_API_SECRET
+    sync: false
+  - key: CLOUDINARY_API_KEY
+    sync: false
+  - key: CLOUDINARY_CLOUD_NAME
+    sync: false
+  - key: JWT_REFRESH_SECRET
+    sync: false
+  - key: JWT_ACCESS_SECRET
+    sync: false
+  - key: PassWordEmail
+    sync: false
+  - key: Email
+    sync: false
+  - key: RAZOR_PAY_SECRET
+    sync: false
+  - key: RAZOR_PAY_KEY
+    sync: false
+  - key: PORT
+    sync: false
+  - key: DATABASE
+    sync: false
+  region: oregon
+  buildCommand: npm install
+  startCommand: npm start
+  autoDeployTrigger: "on"
+  rootDir: .

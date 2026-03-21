@@ -22,6 +22,7 @@ var slotRouter = require("./routes/slots/slots");
 var paymentRouter = require("./routes/payment/payment");
 var bankDetailsRouter = require("./routes/bankDetails/bankDetails");
 var DashboardRouter = require("./routes/Dashboard/Dashboard");
+var ReportsRouter = require("./routes/reports/reports")
 
 require("./DB/conn");
 require("./middlewares/passportConfig")
@@ -74,6 +75,7 @@ app.use("/blogs", blogRouter);
 app.use("/slots", slotRouter);
 app.use("/payment", paymentRouter);
 app.use("/bankDetails", bankDetailsRouter);
+app.use("/reports", ReportsRouter)
 
 app.use(function (req, res, next) {
   next(createError(404));

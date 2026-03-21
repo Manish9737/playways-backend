@@ -2,9 +2,7 @@ const jwt = require("jsonwebtoken");
 
 const verifyToken = (role, cookieName) => (req, res, next) => {
   const authHeader = req.headers["authorization"];
-  // console.log(authHeader, "<=  Auth Header")
-  const token = authHeader && authHeader.split(" ")[1]; 
-  console.log(token, "<=  Token")
+  const token = authHeader && authHeader.split(" ")[1];
   if (!token) {
     return res.status(401).json({
       success: false,
@@ -14,8 +12,6 @@ const verifyToken = (role, cookieName) => (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
-
-    console.log(decoded)
 
     if (decoded.role !== role) {
       return res.status(403).json({
@@ -41,8 +37,8 @@ const verifyToken = (role, cookieName) => (req, res, next) => {
   }
 };
 
-const authenticateUser  = verifyToken("user",  "refreshToken");
-const authenticateHost  = verifyToken("host",  "hostRefreshToken");
+const authenticateUser = verifyToken("user", "refreshToken");
+const authenticateHost = verifyToken("host", "hostRefreshToken");
 const authenticateAdmin = verifyToken("admin", "adminRefreshToken");
 
 module.exports = { authenticateUser, authenticateHost, authenticateAdmin };

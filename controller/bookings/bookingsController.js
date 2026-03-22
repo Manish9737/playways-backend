@@ -3,12 +3,97 @@ const Slot = require("../../model/slotsSchema");
 const GameStation = require("../../model/gsSchema");
 const Game = require("../../model/gameSchema");
 const Activity = require("../../model/activitySchema");
-const {parseJSON} = require("../../utils/helpers")
+const { parseJSON } = require("../../utils/helpers");
 const redis = require("../../config/redis");
+const sendEmail = require("../../Email/email");
+const {
+  bookingSuccessTemplate,
+  bookingCancelTemplate,
+} = require("../../Email/templates/templates");
+const User = require("../../model/userSchema");
 
 const BOOKINGS_CACHE_KEY = "bookings:all";
 const BOOKING_KEY = (id) => `booking:${id}`;
 const BOOKINGS_LIST_KEY = (query) => `bookings:list:${JSON.stringify(query)}`;
+
+const sendBookingConfirmationEmail = async ({
+  bookingId,
+  userId,
+  gameStationId,
+  gameId,
+  slotDate,
+  slotTiming,
+  duration,
+  paymentId,
+  orderId,
+  amount,
+}) => {
+  const [user, station, game] = await Promise.all([
+    User.findById(userId).lean(),
+    GameStation.findById(gameStationId).lean(),
+    Game.findById(gameId).lean(),
+  ]);
+
+  if (!user?.email) return;
+
+  await sendEmail(
+    user.email,
+    "🎮 Booking Confirmed — PlayWays",
+    bookingSuccessTemplate({
+      name: user.userName || "Player",
+      bookingId: bookingId.toString().slice(-8).toUpperCase(),
+      gameStation: station?.name || "Game Station",
+      game: game?.name || "Game",
+      address: station?.address || "",
+      city: station?.city || "",
+      date: new Date(slotDate).toLocaleDateString("en-IN", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      }),
+      slot: slotTiming,
+      duration,
+      amount: amount || 0,
+      paymentId: paymentId || "",
+      orderId: orderId || "",
+    }),
+  );
+};
+
+const sendCancellationEmail = async (booking) => {
+  try {
+    const [user, station, game] = await Promise.all([
+      User.findById(booking.userId).lean(),
+      GameStation.findById(booking.gameStationId).lean(),
+      Game.findById(booking.game).lean(),
+    ]);
+
+    if (!user?.email) return;
+
+    await sendEmail(
+      user.email,
+      "❌ Booking Cancelled — PlayWays",
+      bookingCancelTemplate({
+        name: user.userName || "Player",
+        bookingId: booking._id.toString().slice(-8).toUpperCase(),
+        gameStation: station?.name || "Game Station",
+        game: game?.name || "Game",
+        date: new Date(booking.slotDate).toLocaleDateString("en-IN", {
+          weekday: "long",
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        }),
+        slot: booking.slotTiming,
+        duration: booking.duration,
+        amount: 0,
+      }),
+    );
+  } catch (err) {
+    console.error("[Cancel Email] Failed:", err.message);
+  }
+};
 
 const addBooking = async (req, res, next) => {
   const { gameStationId } = req.params;
@@ -25,9 +110,22 @@ const addBooking = async (req, res, next) => {
       paymentStatus: "successfull",
     });
 
-  await newBooking.save();
+    await newBooking.save();
 
     await redis.del(BOOKINGS_CACHE_KEY);
+
+    sendBookingConfirmationEmail({
+      bookingId: newBooking._id,
+      userId,
+      gameStationId,
+      gameId: game,
+      slotDate,
+      slotTiming,
+      duration,
+      paymentId,
+      orderId,
+      amount,
+    }).catch((err) => console.error("[Booking Email] Failed:", err));
 
     res.status(201).json({
       message: "Booking created successfully",
@@ -149,6 +247,8 @@ const cancelBooking = async (req, res, next) => {
     }
 
     await Booking.findByIdAndDelete(bookingId);
+
+    sendCancellationEmail(booking);
 
     await redis.del(BOOKING_KEY(bookingId));
     await redis.del(BOOKINGS_CACHE_KEY);

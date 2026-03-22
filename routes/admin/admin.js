@@ -47,12 +47,23 @@ const {
   getCountOfStationsById,
   getAllGsByHostId,
   getGsById,
+  updateAdmin,
 } = require("../../controller/admin/adminController");
 const { checkSuperUser } = require("../../middlewares/adminAuth");
 const upload = require("../../middlewares/singleFileUpload");
-const { getAllBlogs, createBlog, updateBlog, deleteBlog } = require("../../controller/PBlogs/PblogsController");
-const { updateBookingStatus } = require("../../controller/bookings/bookingsController");
-const { refreshAdminToken, logoutAdmin } = require("../../controller/auth/refreshController");
+const {
+  getAllBlogs,
+  createBlog,
+  updateBlog,
+  deleteBlog,
+} = require("../../controller/PBlogs/PblogsController");
+const {
+  updateBookingStatus,
+} = require("../../controller/bookings/bookingsController");
+const {
+  refreshAdminToken,
+  logoutAdmin,
+} = require("../../controller/auth/refreshController");
 const { authenticateAdmin } = require("../../middlewares/Auth");
 
 router.post("/register", registerAdmin); // Register new Admin
@@ -68,6 +79,7 @@ router.get("/getCities", getCities);
 router.use(authenticateAdmin);
 router.get("/admins", allAdmins); // all Admin
 router.post("/:adminId/addAdmin", addAdmin); // Add new Admin
+router.put("/:adminId/update/:targetId", checkSuperUser, updateAdmin);
 router.post("/:adminId/changePassword", changePassword); // change Admin pass
 router.get(`/:adminId/details`, adminDetails);
 router.get("/:adminId/activities", getRecentActivities);
@@ -78,10 +90,13 @@ router.post("/addCountry", addCountry);
 router.post("/addCities", addCities);
 router.post("/updateCountry/:id", updateCountry);
 
-
 router.get("/users", allUsers);
 router.post("/users/:adminId/add", checkSuperUser, AddUser);
-router.put("/users/:adminId/update/:id", upload("images").single("ProfileImg"), updateUser);
+router.put(
+  "/users/:adminId/update/:id",
+  upload("images").single("ProfileImg"),
+  updateUser,
+);
 router.delete("/users/:adminId/delete/:id", checkSuperUser, deleteUser);
 
 router.get("/quotes", allQuotes);
@@ -90,8 +105,12 @@ router.put("/quotes/:adminId/update/:id", updateQuote);
 router.delete("/quotes/:adminId/delete/:id", deleteQuote);
 
 router.get("/games", allGames);
-router.post("/games/:adminId/add",upload("images").single("image"), addGame);
-router.put("/games/:adminId/update/:id",upload("images").single("image"), updateGame);
+router.post("/games/:adminId/add", upload("images").single("image"), addGame);
+router.put(
+  "/games/:adminId/update/:id",
+  upload("images").single("image"),
+  updateGame,
+);
 router.delete("/games/:adminId/delete/:id", deleteGame);
 
 router.get("/hosts", allHosts);
@@ -100,13 +119,29 @@ router.put("/hosts/:adminId/update/:hostId", updateHost);
 router.delete("/hosts/:adminId/delete/:hostId", checkSuperUser, deleteHost);
 
 router.get("/blogs", getAllBlogs);
-router.post("/blogs/:adminId/add", upload("images").single("image"),createBlog);
-router.put("/blogs/:adminId/update/:id", upload("images").single("image"), updateBlog);
+router.post(
+  "/blogs/:adminId/add",
+  upload("images").single("image"),
+  createBlog,
+);
+router.put(
+  "/blogs/:adminId/update/:id",
+  upload("images").single("image"),
+  updateBlog,
+);
 router.delete("/blogs/:adminId/delete/:id", deleteBlog);
 
 router.get("/gameStations", allGameStations);
-router.post("/gameStations/:adminId/add",upload("images").single("gsLogo"), addGameStation);
-router.put("/gameStations/:adminId/update/:id", upload("images").single("gsLogo"), updateGameStation);
+router.post(
+  "/gameStations/:adminId/add",
+  upload("images").single("gsLogo"),
+  addGameStation,
+);
+router.put(
+  "/gameStations/:adminId/update/:id",
+  upload("images").single("gsLogo"),
+  updateGameStation,
+);
 router.delete("/gameStations/:adminId/delete/:id", deleteGameStation);
 router.get("/gameStations/:id/stations", getCountOfStationsById);
 router.get("/gameStations/getallstationbyhostId/:id", getAllGsByHostId);

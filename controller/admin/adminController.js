@@ -71,6 +71,13 @@ const loginAdmin = async (req, res, next) => {
         .json({ error: "Admin not found.", success: false });
     }
 
+    if (!admin.is_active) {
+      return res.status(403).json({
+        error: "Your account has been deactivated. Contact a superuser.",
+        success: false,
+      });
+    }
+
     const isMatch = await bcrypt.compare(password, admin.password);
 
     if (!isMatch) {
@@ -94,12 +101,14 @@ const loginAdmin = async (req, res, next) => {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
+    const { password: _, refreshToken: __, ...adminData } = admin.toObject();
+
     return res.status(200).json({
       message: "Login successful",
       success: true,
       accessToken,
       adminId: admin._id,
-      admin: admin.toObject(),
+      admin: adminData,
     });
   } catch (error) {
     console.error(error);
@@ -223,6 +232,7 @@ const addAdmin = async (req, res, next) => {
       email,
       password,
       isSuperUser,
+      is_active: true,
       permissions: {
         canAdd: permissions?.canAdd ?? false,
         canEdit: permissions?.canEdit ?? false,
@@ -241,12 +251,88 @@ const addAdmin = async (req, res, next) => {
 
     await activity.save();
 
-    res
-      .status(201)
-      .json({ message: "Admin added successfully", admin: newAdmin });
+    const { password: _, ...adminWithoutPassword } = newAdmin.toObject();
+
+    res.status(201).json({
+      message: "Admin added successfully",
+      admin: adminWithoutPassword,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+const updateAdmin = async (req, res, next) => {
+  const { adminId, targetId } = req.params;
+  const { userName, email, newPassword, isSuperUser, is_active, permissions } =
+    req.body;
+
+  try {
+    const requestingAdmin = await Admin.findById(adminId);
+    if (!requestingAdmin?.isSuperUser) {
+      return res
+        .status(401)
+        .json({ error: "Unauthorized — only superusers can update admins" });
+    }
+
+    const targetAdmin = await Admin.findById(targetId).select("+password");
+    if (!targetAdmin) {
+      return res.status(404).json({ error: "Admin not found" });
+    }
+
+    if (userName) targetAdmin.userName = userName;
+    if (email) targetAdmin.email = email;
+
+    if (newPassword && newPassword.trim() !== "") {
+      targetAdmin.password = newPassword;
+    }
+
+    if (typeof isSuperUser === "boolean") {
+      targetAdmin.isSuperUser = isSuperUser;
+    }
+
+    if (typeof is_active === "boolean") {
+      targetAdmin.is_active = is_active;
+    }
+
+    if (permissions) {
+      targetAdmin.permissions = {
+        canAdd: permissions.canAdd ?? targetAdmin.permissions.canAdd,
+        canEdit: permissions.canEdit ?? targetAdmin.permissions.canEdit,
+        canDelete: permissions.canDelete ?? targetAdmin.permissions.canDelete,
+        canView: permissions.canView ?? targetAdmin.permissions.canView,
+      };
+    }
+
+    if (isSuperUser === true) {
+      targetAdmin.permissions = {
+        canAdd: true,
+        canEdit: true,
+        canDelete: true,
+        canView: true,
+      };
+    }
+
+    await targetAdmin.save();
+
+    await Activity.create({
+      adminId,
+      activityType: `Admin "${targetAdmin.userName}" updated`,
+      actionType: "update",
+    });
+
+    const { password: _, ...updatedAdmin } = targetAdmin.toObject();
+    return res.status(200).json({
+      message: "Admin updated successfully",
+      success: true,
+      admin: updatedAdmin,
+    });
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(500)
+      .json({ message: "Internal server error", success: false });
   }
 };
 
@@ -1125,6 +1211,7 @@ module.exports = {
   sendEmailbyAdmin,
   changePassword,
   addAdmin,
+  updateAdmin,
   getRecentActivities,
 
   allUsers,

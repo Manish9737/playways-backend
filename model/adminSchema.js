@@ -46,6 +46,10 @@ const adminSchema = new mongoose.Schema(
         default: true,
       },
     },
+    is_active: {
+      type: Boolean,
+      default: true,
+    },
   },
   { timestamps: true },
 );

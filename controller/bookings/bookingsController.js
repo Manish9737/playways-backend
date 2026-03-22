@@ -97,7 +97,16 @@ const sendCancellationEmail = async (booking) => {
 
 const addBooking = async (req, res, next) => {
   const { gameStationId } = req.params;
-  const { userId, slotDate, slotTiming, duration, game } = req.body;
+  const {
+    userId,
+    slotDate,
+    slotTiming,
+    duration,
+    game,
+    paymentId,
+    orderId,
+    amount,
+  } = req.body;
   try {
     const newBooking = new Booking({
       userId,
@@ -246,9 +255,9 @@ const cancelBooking = async (req, res, next) => {
       });
     }
 
-    await Booking.findByIdAndDelete(bookingId);
-
     sendCancellationEmail(booking);
+
+    await Booking.findByIdAndDelete(bookingId);
 
     await redis.del(BOOKING_KEY(bookingId));
     await redis.del(BOOKINGS_CACHE_KEY);

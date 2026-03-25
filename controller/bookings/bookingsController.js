@@ -5,7 +5,7 @@ const Game = require("../../model/gameSchema");
 const Activity = require("../../model/activitySchema");
 const { parseJSON } = require("../../utils/helpers");
 const redis = require("../../config/redis");
-const sendEmail = require("../../Email/email");
+const sendEmail = require("../../services/sendEmail");
 const {
   bookingSuccessTemplate,
   bookingCancelTemplate,

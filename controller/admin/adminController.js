@@ -5,14 +5,13 @@ const Game = require("../../model/gameSchema");
 const Qoute = require("../../model/quoteSchema");
 const Host = require("../../model/hostSchema");
 const GameStation = require("../../model/gsSchema");
-const sendEmail = require("../../Email/email");
+const sendEmail = require("../../services/sendEmail");
 const bcrypt = require("bcryptjs");
-const nodemailer = require("nodemailer");
 const uploadImage = require("../../utils/uploadImage");
 const deleteCloudinaryImage = require("../../utils/deleteCloudinaryImage");
 const generateAccessToken = require("../../utils/generateAccessToken");
 const generateRefreshToken = require("../../utils/generateRefreshToken");
-const { adminEmailTemplate } = require("../../Email/templates/templates");
+const { adminEmailTemplate, welcomeTemplate } = require("../../Email/templates/templates");
 
 const registerAdmin = async (req, res) => {
   const { userName, email, password, isSuperUser } = req.body;
@@ -156,23 +155,11 @@ const sendEmailbyAdmin = async (req, res, next) => {
         .json({ error: "Please fill the fields properly.", success: false });
     }
 
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.Email,
-        pass: process.env.PasswordEmail,
-      },
-    });
-
-    const html = adminEmailTemplate({ subject, body: content });
-    const mailOptions = {
-      from: process.env.Email,
+    await sendEmail(
       to,
       subject,
-      html,
-    };
-
-    await transporter.sendMail(mailOptions);
+      adminEmailTemplate({ subject, body: content })
+    )
 
     const activity = new Activity({
       adminId: adminId,
@@ -429,18 +416,11 @@ const AddUser = async (req, res, next) => {
 
       await activity.save();
 
-      const subject = "Welcome to PlayWays Family.";
-      const content = `
-        <h2>Dear ${userName},</h2>
-        <p>Thank you for registering with us!</p>
-        <p>Your account has been successfully created.</p>
-        <p>Best regards,</p>
-        <p>PlayWays Team</p>
-        <hr>
-        <p>For Support, <a href="http://localhost:3000/contactUs">Click here</a></p>
-      `;
-
-      await sendEmail(email, subject, content);
+      await sendEmail(
+        email,
+        "Welcome to PlayWays Family 🎮",
+        welcomeTemplate({ name: email, role: "host" }),
+      );
 
       return res.status(200).json({
         message: "User is Registered",
@@ -819,18 +799,11 @@ const addHost = async (req, res, next) => {
 
       await activity.save();
 
-      const subject = "Welcome to PlayWays Family.";
-      const content = `
-        <h2>Dear ${email},</h2>
-        <p>Thank you for registering with us!</p>
-        <p>Your account has been successfully created.</p>
-        <p>Best regards,</p>
-        <p>PlayWays Team</p>
-        <hr>
-        <p>For Support, <a href="http://localhost:3000/contact">Click here</a></p>
-      `;
-
-      await sendEmail(email, subject, content);
+      await sendEmail(
+        email,
+        "Welcome to PlayWays Family",
+        welcomeTemplate({ name: userName, role: "user" }),
+      );
 
       console.log("Host is Registered");
       return res.status(200).json({

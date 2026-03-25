@@ -2,7 +2,7 @@ const Host = require("../../model/hostSchema");
 const bcrypt = require("bcryptjs");
 const passport = require("passport");
 const { generateOTP } = require("../users/userController");
-const sendEmail = require("../../Email/email");
+const sendEmail = require("../../services/sendEmail");
 const generateAccessToken = require("../../utils/generateAccessToken");
 const generateRefreshToken = require("../../utils/generateRefreshToken");
 const {
@@ -36,8 +36,8 @@ const registerHost = async (req, res, next) => {
 
       await sendEmail(
         email,
-        "Welcome to PlayWays Family 🎮",
-        welcomeTemplate({ name: email, role: "host" }),
+        "Welcome to PlayWays Family",
+        welcomeTemplate({ name: userName, role: "user" }),
       );
 
       console.log("Host is Registered");

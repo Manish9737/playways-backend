@@ -5,7 +5,7 @@ const Booking = require("../../model/bookingSchema");
 const Game = require("../../model/gameSchema");
 const bcrypt = require("bcryptjs");
 const nodemailer = require("nodemailer");
-const sendEmail = require("../../Email/email");
+// const sendEmail = require("../../Email/email");
 const ViewedGameStation = require("../../model/viewedGameStation");
 const uploadImage = require("../../utils/uploadImage");
 const deleteCloudinaryImage = require("../../utils/deleteCloudinaryImage");
@@ -16,6 +16,7 @@ const {
   otpTemplate,
   passwordResetSuccessTemplate,
 } = require("../../Email/templates/templates");
+const sendEmail = require("../../services/sendEmail");
 
 const generateOTP = () => {
   return Math.floor(100000 + Math.random() * 900000);
@@ -127,7 +128,6 @@ const registerUser = async (req, res, next) => {
         welcomeTemplate({ name: userName, role: "user" }),
       );
 
-      console.log("User is Registered");
       return res.status(200).json({
         message: "User is Registered",
         success: true,

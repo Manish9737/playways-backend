@@ -37,10 +37,9 @@ const registerHost = async (req, res, next) => {
       await sendEmail(
         email,
         "Welcome to PlayWays Family",
-        welcomeTemplate({ name: userName, role: "user" }),
+        welcomeTemplate({ name: email, role: "host" }),
       );
 
-      console.log("Host is Registered");
       return res.status(200).json({
         message: "Host is Registered",
         success: true,

@@ -6,7 +6,7 @@ const mailjet = Mailjet.apiConnect(
   process.env.MAILJET_SECRET_KEY
 );
 
-const sendEmail = async (to, subject, html) => {
+const sendEmail = async (to, subject, html, textFallback="") => {
   try {
     const request = await mailjet.post("send", { version: "v3.1" }).request({
       Messages: [
@@ -15,13 +15,21 @@ const sendEmail = async (to, subject, html) => {
             Email: process.env.MAILJET_FROM_EMAIL,
             Name: process.env.MAILJET_FROM_NAME || "PlayWays",
           },
+           ReplyTo: {
+            Email: process.env.MAILJET_FROM_EMAIL,
+            Name:  "PlayWays Support",
+          },
           To: [
             {
               Email: to,
             },
           ],
           Subject: subject,
-          HTMLPart: html,
+          HTMLPart: html || "Testing...",
+          TextPart: textFallback || "Please view this email in an HTML-compatible email client.",
+          Headers: {
+            "List-Unsubscribe": `<mailto:${process.env.MAILJET_FROM_EMAIL}>`,
+          },
         },
       ],
     });

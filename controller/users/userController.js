@@ -15,6 +15,7 @@ const {
   welcomeTemplate,
   otpTemplate,
   passwordResetSuccessTemplate,
+  contactUsTemplate,
 } = require("../../Email/templates/templates");
 const sendEmail = require("../../services/sendEmail");
 
@@ -393,7 +394,7 @@ const resetPassword = async (req, res, next) => {
 const fetchOTP = async (req, res) => {
   try {
     const { email, OTP } = req.body;
-    console.log(`email: ${email}`, `otp: ${OTP}`)
+    console.log(`email: ${email}`, `otp: ${OTP}`);
 
     const user = await User.findOne({ email });
 
@@ -457,30 +458,13 @@ const contactUs = async (req, res, next) => {
         .json({ error: "Please fill the fields properly.", success: false });
     }
 
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.Email,
-        pass: process.env.PassWordEmail,
-      },
-    });
+    await sendEmail(
+      process.env.MAILJET_FROM_EMAIL,
+      `📩 Contact Us: ${subject}`,
+      contactUsTemplate({ name, email, subject, message }),
+    );
 
-    const mailOptions = {
-      from: "PlayWays <" + process.env.Email + ">",
-      to: "kumavatmanish5@gmail.com",
-      subject: subject,
-      text: `Name: ${name}\nEmail: ${email}\nMessage: ${message}`,
-    };
-
-    transporter.sendMail(mailOptions, (error, info) => {
-      if (error) {
-        console.error("Error sending email:", error);
-        res.status(500).json({ message: "Failed to send message" });
-      } else {
-        console.log("Email sent:", info.response);
-        res.status(200).json({ message: "Message sent successfully" });
-      }
-    });
+    res.status(200).json({ message: "Message sent successfully" });
   } catch (error) {
     console.error("Error:", error);
     res.status(500).json({ message: "Internal server error" });

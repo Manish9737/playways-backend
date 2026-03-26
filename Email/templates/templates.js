@@ -524,6 +524,93 @@ const bookingSuccessTemplate = ({
     </p>
   `);
 
+
+  const contactUsTemplate = ({ name, email, subject, message }) =>
+  baseTemplate(`
+    <span class="badge">📩 New Contact Request</span>
+
+    <h2 style="color:#1f2937; font-size:22px; margin-bottom:6px;">
+      New Message from User
+    </h2>
+
+    <p style="color:#6b7280; font-size:14px; margin-bottom:20px;">
+      You have received a new contact request from your PlayWays website.
+    </p>
+
+    <hr class="divider"/>
+
+    <!-- User Info -->
+    <p style="font-size:13px; font-weight:bold; color:#9ca3af; text-transform:uppercase; margin-bottom:10px;">
+      👤 User Details
+    </p>
+
+    <table style="width:100%; border-collapse:collapse; font-size:14px;">
+      <tr style="background:#f9fafb;">
+        <td style="padding:10px; color:#6b7280; width:30%;">Name</td>
+        <td style="padding:10px; font-weight:bold; color:#1f2937;">${name}</td>
+      </tr>
+      <tr>
+        <td style="padding:10px; color:#6b7280;">Email</td>
+        <td style="padding:10px; color:#1f2937;">
+          <a href="mailto:${email}" style="color:#f59e0b; text-decoration:none;">
+            ${email}
+          </a>
+        </td>
+      </tr>
+      <tr style="background:#f9fafb;">
+        <td style="padding:10px; color:#6b7280;">Subject</td>
+        <td style="padding:10px; font-weight:bold; color:#1f2937;">
+          ${subject}
+        </td>
+      </tr>
+    </table>
+
+    <hr class="divider"/>
+
+    <!-- Message -->
+    <p style="font-size:13px; font-weight:bold; color:#9ca3af; text-transform:uppercase; margin-bottom:10px;">
+      💬 Message
+    </p>
+
+    <div style="
+      background:#f9fafb;
+      border:1px solid #e5e7eb;
+      border-left:4px solid #f59e0b;
+      border-radius:10px;
+      padding:16px;
+      line-height:1.7;
+      color:#374151;
+      font-size:14px;
+      white-space:pre-line;
+    ">
+      ${message}
+    </div>
+
+    <hr class="divider"/>
+
+    <!-- Quick Action -->
+    <div style="text-align:center; margin:20px 0;">
+      <a href="mailto:${email}"
+        style="
+          display:inline-block;
+          padding:12px 24px;
+          background:linear-gradient(135deg,#10b981,#059669);
+          color:#fff;
+          text-decoration:none;
+          border-radius:8px;
+          font-size:14px;
+          font-weight:bold;
+        ">
+        ✉️ Reply to User
+      </a>
+    </div>
+
+    <!-- Footer Note -->
+    <p style="color:#9ca3af; font-size:12px; text-align:center;">
+      This message was submitted via the PlayWays Contact Us form.
+    </p>
+  `);
+
 module.exports = {
   welcomeTemplate,
   otpTemplate,
@@ -533,4 +620,5 @@ module.exports = {
   adminEmailTemplate,
   bookingSuccessTemplate,
   adminEmailTemplate,
+  contactUsTemplate
 };
